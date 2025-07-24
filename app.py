@@ -116,6 +116,7 @@ def list_tables_endpoint():
 # Inicializar el navegador de Supabase
 navegador = NavegadorSupabase(db.client)
 
+@app.route('/', methods=['GET', 'POST'])
 @app.route('/buscar', methods=['GET', 'POST'])
 def buscar():
     """
