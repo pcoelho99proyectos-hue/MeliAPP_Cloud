@@ -218,5 +218,27 @@ function updateSelection(items) {
         }
     });
 }
+
+    // Auto-search when usuario_id parameter is present in URL
+    function autoSearchFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const usuarioId = urlParams.get('usuario_id');
+        
+        if (usuarioId) {
+            const searchInput = document.getElementById('searchInput');
+            const searchForm = document.getElementById('searchForm');
+            
+            // Set the search input value
+            searchInput.value = usuarioId;
+            
+            // Submit the form automatically
+            searchForm.submit();
+        }
+    }
+
+    // Execute auto-search when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        autoSearchFromURL();
+    });
 </script>
 {% endblock %}
