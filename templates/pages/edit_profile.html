@@ -1,0 +1,437 @@
+{% extends "base/layout.html" %}
+
+{% block title %}Editar Perfil - MeliAPP{% endblock %}
+
+{% block content %}
+    <style>
+        .primary { color: #f59e0b; }
+        .bg-primary { background-color: #f59e0b; }
+        .border-primary { border-color: #f59e0b; }
+        .hover\:bg-primary\/90:hover { background-color: rgba(245, 158, 11, 0.9); }
+    </style>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-xl font-bold text-primary">MeliAPP</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/profile" class="text-slate-600 hover:text-primary">
+                        <i class="fas fa-arrow-left mr-2"></i>Volver al Perfil
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-xl shadow-lg">
+            <div class="px-6 py-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h1 class="text-3xl font-bold text-slate-900">Editar Información Personal</h1>
+                    <div class="text-sm text-slate-500">
+                        <i class="fas fa-user mr-1"></i>Editando tu perfil
+                    </div>
+                </div>
+
+                <!-- Progress Indicator -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-slate-700">Progreso de completación</span>
+                        <span class="text-sm text-slate-500" id="progress-text">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2">
+                        <div class="bg-primary h-2 rounded-full transition-all duration-300" id="progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Tabs Navigation -->
+                <div class="border-b border-slate-200 mb-8">
+                    <nav class="flex space-x-8">
+                        <button onclick="showTab('usuarios')" class="tab-button py-3 px-1 border-b-2 border-primary text-primary font-medium">
+                            <i class="fas fa-user mr-2"></i>Usuario
+                        </button>
+                        <button onclick="showTab('info_contacto')" class="tab-button py-3 px-1 border-b-2 border-transparent text-slate-500 hover:text-slate-700">
+                            <i class="fas fa-address-card mr-2"></i>Contacto
+                        </button>
+                        <button onclick="showTab('ubicaciones')" class="tab-button py-3 px-1 border-b-2 border-transparent text-slate-500 hover:text-slate-700">
+                            <i class="fas fa-map-marker-alt mr-2"></i>Ubicaciones
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- User Form -->
+                <div id="usuarios-form" class="tab-content">
+                    <form id="form-usuarios" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">
+                                    Username *
+                                    <span class="text-xs text-slate-500 ml-1">(3-80 caracteres)</span>
+                                </label>
+                                <input type="text" name="username" id="username" 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                       required maxlength="80" minlength="3">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Tipo de Usuario</label>
+                                <select name="tipo_usuario" id="tipo_usuario" 
+                                        class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option value="Regular">Regular</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Rol</label>
+                            <input type="text" name="role" id="role" 
+                                   class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                   placeholder="Ej: Apicultor, Productor, etc.">
+                        </div>
+                        
+                        <div>
+                            <button type="submit" class="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary/90 transition-colors">
+                                <i class="fas fa-save mr-2"></i>Guardar Datos de Usuario
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Contact Form -->
+                <div id="info_contacto-form" class="tab-content hidden">
+                    <form id="form-info_contacto" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Nombre Completo</label>
+                                <input type="text" name="nombre_completo" id="nombre_completo" 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                       placeholder="Tu nombre completo">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Nombre Empresa</label>
+                                <input type="text" name="nombre_empresa" id="nombre_empresa" 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                       placeholder="Nombre de tu empresa o marca">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Correo Principal</label>
+                                <input type="email" name="correo_principal" id="correo_principal" 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                       placeholder="correo@ejemplo.com">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Teléfono Principal</label>
+                                <input type="tel" name="telefono_principal" id="telefono_principal" 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                       placeholder="+56912345678">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Dirección</label>
+                                <input type="text" name="direccion" id="direccion" 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                       placeholder="Calle y número">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Comuna</label>
+                                <input type="text" name="comuna" id="comuna" 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                       placeholder="Nombre de la comuna">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Región</label>
+                            <input type="text" name="region" id="region" 
+                                   class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                   placeholder="Nombre de la región">
+                        </div>
+                        
+                        <div>
+                            <button type="submit" class="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary/90 transition-colors">
+                                <i class="fas fa-save mr-2"></i>Guardar Información de Contacto
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Locations Form -->
+                <div id="ubicaciones-form" class="tab-content hidden">
+                    <form id="form-ubicaciones" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Buscar Ubicación (Google Maps)</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="gmaps_search" 
+                                       class="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                       placeholder="Buscar ubicación...">
+                                <button type="button" onclick="searchLocation()" 
+                                        class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div id="gmaps_results" class="mt-2 space-y-1"></div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Nombre de Ubicación</label>
+                                <input type="text" name="nombre" id="ubicacion_nombre" 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                       required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Dirección Completa</label>
+                                <input type="text" name="direccion_completa" id="direccion_completa" 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                       required>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Latitud</label>
+                                <input type="number" name="latitud" id="latitud" step="0.000001" 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                       required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Longitud</label>
+                                <input type="number" name="longitud" id="longitud" step="0.000001" 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                       required>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Descripción</label>
+                            <textarea name="descripcion" id="descripcion" rows="3" 
+                                      class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                      placeholder="Descripción de la ubicación..."></textarea>
+                        </div>
+                        
+                        <div>
+                            <button type="submit" class="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary/90 transition-colors">
+                                <i class="fas fa-save mr-2"></i>Guardar Ubicación
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Message -->
+    <div id="messageToast" class="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden">
+        <span id="messageText"></span>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active state from all buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('border-primary', 'text-primary');
+                button.classList.add('border-transparent', 'text-slate-500');
+            });
+            
+            // Show selected tab content
+            document.getElementById(`${tabName}-form`).classList.remove('hidden');
+            
+            // Activate selected button
+            event.target.classList.add('border-primary', 'text-primary');
+            event.target.classList.remove('border-transparent', 'text-slate-500');
+            
+            // Load data for the selected tab
+            loadTabData(tabName);
+        }
+
+        // Load existing data when switching tabs
+        async function loadTabData(tabName) {
+            try {
+                const response = await fetch(`/api/data/${tabName}`);
+                const data = await response.json();
+                
+                if (data.success && data.data.length > 0) {
+                    const record = data.data[0];
+                    populateForm(tabName, record);
+                    updateProgress();
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        // Populate form fields with existing data
+        function populateForm(table, data) {
+            Object.keys(data).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.value = data[key] || '';
+                }
+            });
+        }
+
+        // Calculate progress based on filled fields
+        function updateProgress() {
+            const visibleForm = document.querySelector('.tab-content:not(.hidden)');
+            if (!visibleForm) return;
+            
+            const inputs = visibleForm.querySelectorAll('input[required], textarea[required]');
+            const filledInputs = Array.from(inputs).filter(input => input.value.trim() !== '').length;
+            const totalInputs = inputs.length;
+            
+            const progress = totalInputs > 0 ? Math.round((filledInputs / totalInputs) * 100) : 0;
+            
+            document.getElementById('progress-text').textContent = `${progress}%`;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+        }
+
+        // Mock Google Maps search functionality
+        function searchLocation() {
+            const searchTerm = document.getElementById('gmaps_search').value;
+            if (!searchTerm.trim()) return;
+            
+            // Mock results - in real implementation, this would call Google Maps API
+            const mockResults = [
+                {
+                    name: "Apiario Central",
+                    address: "Camino a Pomaire 123, Melipilla",
+                    lat: -33.6891,
+                    lng: -71.2156
+                },
+                {
+                    name: "Campo de Miel",
+                    address: "Ruta 68 km 45, Casablanca",
+                    lat: -33.3172,
+                    lng: -71.4118
+                },
+                {
+                    name: "Granja Apícola Norte",
+                    address: "Sector Los Cipreses, Colina",
+                    lat: -33.2000,
+                    lng: -70.7000
+                }
+            ];
+            
+            const resultsDiv = document.getElementById('gmaps_results');
+            resultsDiv.innerHTML = '';
+            
+            mockResults.forEach(location => {
+                const div = document.createElement('div');
+                div.className = 'p-3 border border-slate-200 rounded-md hover:bg-slate-50 cursor-pointer';
+                div.innerHTML = `
+                    <div class="font-medium">${location.name}</div>
+                    <div class="text-sm text-slate-600">${location.address}</div>
+                `;
+                div.onclick = () => selectLocation(location);
+                resultsDiv.appendChild(div);
+            });
+        }
+
+        function selectLocation(location) {
+            document.getElementById('ubicacion_nombre').value = location.name;
+            document.getElementById('latitud').value = location.lat.toFixed(6);
+            document.getElementById('longitud').value = location.lng.toFixed(6);
+            document.getElementById('direccion_completa').value = location.address;
+            
+            // Clear results
+            document.getElementById('gmaps_results').innerHTML = '';
+            document.getElementById('gmaps_search').value = location.name;
+        }
+
+        // Form submissions
+        document.getElementById('form-usuarios').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await saveData('usuarios', {
+                username: document.getElementById('username').value,
+                tipo_usuario: document.getElementById('tipo_usuario').value,
+                role: document.getElementById('role').value
+            });
+        });
+
+        document.getElementById('form-info_contacto').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await saveData('info_contacto', {
+                nombre_completo: document.getElementById('nombre_completo').value,
+                nombre_empresa: document.getElementById('nombre_empresa').value,
+                correo_principal: document.getElementById('correo_principal').value,
+                telefono_principal: document.getElementById('telefono_principal').value,
+                direccion: document.getElementById('direccion').value,
+                comuna: document.getElementById('comuna').value,
+                region: document.getElementById('region').value
+            });
+        });
+
+        document.getElementById('form-ubicaciones').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await saveData('ubicaciones', {
+                nombre: document.getElementById('ubicacion_nombre').value,
+                latitud: parseFloat(document.getElementById('latitud').value),
+                longitud: parseFloat(document.getElementById('longitud').value),
+                descripcion: document.getElementById('descripcion').value,
+                direccion_completa: document.getElementById('direccion_completa').value
+            });
+        });
+
+        async function saveData(table, data) {
+            try {
+                const response = await fetch(`/api/edit/${table}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('Datos guardados correctamente');
+                    setTimeout(() => {
+                        window.location.href = '/profile';
+                    }, 1500);
+                } else {
+                    showMessage(result.error || 'Error al guardar', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error al conectar con el servidor', 'error');
+            }
+        }
+
+        function showMessage(text, type = 'success') {
+            const toast = document.getElementById('messageToast');
+            const messageText = document.getElementById('messageText');
+            
+            messageText.textContent = text;
+            toast.className = `fixed top-4 right-4 z-50 ${type === 'error' ? 'bg-red-500' : 'bg-green-500'} text-white px-6 py-3 rounded-lg shadow-lg`;
+            toast.classList.remove('hidden');
+            
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Add input listeners for progress update
+        document.querySelectorAll('input, textarea').forEach(input => {
+            input.addEventListener('input', updateProgress);
+        });
+
+        // Load initial data
+        loadTabData('usuarios');
+    </script>
+{% endblock %}

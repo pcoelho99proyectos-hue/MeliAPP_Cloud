@@ -14,9 +14,9 @@ class SearchResult:
     data: Dict[str, Any]
     matches: Dict[str, str]  # field: matched_value
 
-class NavegadorSupabase:
+class Searcher:
     def __init__(self, supabase_client):
-        """Inicializa el navegador con el cliente de Supabase."""
+        """Inicializa el Searcher con el cliente de Supabase."""
         self.supabase = supabase_client
         self.search_fields = {
             'usuarios': ['id', 'nombre', 'apellido', 'telefono'],

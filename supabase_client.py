@@ -183,6 +183,23 @@ class SupabaseClient:
                 
         except Exception as e:
             raise Exception(f"Error al invocar Edge Function: {str(e)}")
+    
+    def test_connection(self):
+        """
+        Prueba la conexión con la base de datos Supabase.
+        
+        Returns:
+            tuple: (success: bool, message: str)
+        """
+        try:
+            # Intentar una consulta simple para verificar la conexión
+            response = self.client.table('usuarios').select('id').limit(1).execute()
+            if response.data is not None:
+                return True, "Conexión exitosa con Supabase"
+            else:
+                return False, "No se pudieron obtener datos de Supabase"
+        except Exception as e:
+            return False, f"Error de conexión: {str(e)}"
 
 # Instancia global
 db = SupabaseClient()

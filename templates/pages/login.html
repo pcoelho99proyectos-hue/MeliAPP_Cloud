@@ -153,7 +153,7 @@
         
         <div id="alert-container"></div>
         
-        <form id="login-form" method="POST" action="/login">
+        <form id="login-form">
             <div class="form-group">
                 <label class="form-label" for="email">Correo Electrónico</label>
                 <input type="email" 
@@ -220,7 +220,7 @@
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
             
-            const response = await fetch('/login', {
+            const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

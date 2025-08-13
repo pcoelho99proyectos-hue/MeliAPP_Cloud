@@ -8,6 +8,7 @@
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script>
         tailwind.config = {
             theme: {
@@ -62,16 +63,27 @@
                         <a href="/" class="text-slate-600 hover:text-primary transition-colors">Inicio</a>
                         <a href="/search" class="text-slate-600 hover:text-primary transition-colors">Buscar</a>
                         <a href="/gestionar-lote" class="text-slate-600 hover:text-primary transition-colors">Gestionar Lotes</a>
-                        <div class="relative group">
-                            <a href="{% if g.user.user_uuid %}/profile/{{ g.user.user_uuid }}{% else %}#{% endif %}" class="text-slate-600 hover:text-primary transition-colors flex items-center">
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" 
+                                    @click.away="open = false"
+                                    class="text-slate-600 hover:text-primary transition-colors flex items-center cursor-pointer">
                                 {{ g.user.name }}
-                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-4 h-4 ml-1" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                                 </svg>
-                            </a>
-                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block">
-                                <a href="{% if g.user.user_uuid %}/profile/{{ g.user.user_uuid }}{% else %}#{% endif %}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Mi Perfil</a>
-                                <a href="/logout" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Cerrar Sesión</a>
+                            </button>
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="transform opacity-100 scale-100"
+                                 x-transition:leave-end="transform opacity-0 scale-95"
+                                 class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                                <a href="{% if g.user.user_uuid %}/profile/{{ g.user.user_uuid }}{% else %}#{% endif %}" 
+                                   class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Mi Perfil</a>
+                                <a href="/logout" 
+                                   class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Cerrar Sesión</a>
                             </div>
                         </div>
                     {% else %}

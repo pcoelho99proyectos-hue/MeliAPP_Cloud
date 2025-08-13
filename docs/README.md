@@ -1,33 +1,39 @@
-@ -0,0 +1,119 @@
 # MELI Supabase Test
 
-Aplicación web desarrollada con Flask y Supabase para buscar y visualizar información de usuarios en una base de datos.
+## 🐝 MeliAPP v3 - Sistema de Gestión Apícola
 
-## 🚀 Características
+## 📋 Descripción General
 
-- Interfaz web amigable para buscar usuarios
-- Autocompletado de búsquedas
-- Visualización detallada de información de usuarios
-- Generación de códigos QR para perfiles de usuario
-- Descarga de códigos QR generados
-- Integración con Supabase como base de datos
-- API RESTful para consultas programáticas
-- Paginación de resultados
-- Manejo de errores y logs detallados
+MeliAPP v2 es una plataforma web integral para la gestión de operaciones apícolas, construida con Flask y Supabase. Después de la refactorización completa, ahora cuenta con una arquitectura modular y eficiente.
 
-## 🛠️ Requisitos Previos
+## 🏗️ Arquitectura del Sistema
 
-- Python 3.8 o superior
-- Cuenta de Supabase
-- Variables de entorno configuradas para la conexión a Supabase
+### **Stack Tecnológico**
+- **Backend**: Flask (Python 3.8+)
+- **Base de Datos**: Supabase (PostgreSQL 14+)
+- **Frontend**: HTML5 + Tailwind CSS + Alpine.js
+- **Autenticación**: Supabase Auth + Google OAuth
+- **Sesiones**: Flask sessions con configuración optimizada
+- **QR**: Módulo segno para generación de códigos QR
 
-## 🚀 Instalación
+### **Estructura de Archivos**
 
-1. Clona el repositorio:
-   ```bash
-   git clone [URL_DEL_REPOSITORIO]
-   cd meli_supa_test
-   ```
+```
+MeliAPP_v2/
+├── app.py                    # Configuración principal Flask
+├── auth_manager.py           # Gestión centralizada de autenticación
+├── supabase_client.py        # Cliente Supabase singleton
+├── searcher.py              # Búsqueda avanzada de usuarios
+├── routes.py                # Rutas web y API
+├── templates/               # Plantillas HTML
+│   ├── base/               # Layouts base
+│   ├── pages/              # Páginas específicas
+│   └── components/         # Componentes reutilizables
+├── static/                 # Archivos estáticos
+├── qr_code/               # Módulo de generación QR
+├── docs/                  # Documentación
+└── tests/                 # Pruebas unitarias
+```
 
 2. Crea un entorno virtual (recomendado):
    ```bash
