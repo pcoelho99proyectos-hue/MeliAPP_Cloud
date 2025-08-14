@@ -1,111 +1,86 @@
-"""
-Módulo de endpoints para edición modular de datos de usuario.
-Permite editar datos personales en las tablas usuarios, info_contacto y ubicaciones
-de forma separada, usando el UUID del usuario como referencia absoluta.
-"""
-
-from flask import Blueprint, request, jsonify, session, g
-from functools import wraps
-from supabase_client import db
-from supabase import create_client
+from flask import Blueprint, request, jsonify, g, session
 import logging
-import re
+from datetime import datetime
+from supabase import create_client
 import os
-import traceback
 
 logger = logging.getLogger(__name__)
 
-# Crear blueprint para endpoints de edición
-edit_bp = Blueprint('edit', __name__)
+# Configurar Supabase
+supabase_url = os.getenv('SUPABASE_URL')
+supabase_key = os.getenv('SUPABASE_KEY')
 
-def get_authenticated_supabase_client():
-    """Crea un cliente de Supabase autenticado con el token del usuario actual."""
+edit_bp = Blueprint('edit_user_data', __name__)
+
+def get_authenticated_client():
+    """Obtener cliente Supabase autenticado con JWT del usuario"""
     try:
-        # Obtener el token JWT del usuario desde la sesión
-        access_token = session.get('access_token')
-        refresh_token = session.get('refresh_token')
+        # Debug: imprimir estado de la sesión
+        logger.info(f"g.user: {g.user}")
+        logger.info(f"session keys: {list(session.keys())}")
         
-        # Crear cliente con credenciales de Supabase
-        supabase_url = os.getenv("SUPABASE_URL")
-        supabase_key = os.getenv("SUPABASE_KEY")  # Anon key, no service role
+        # Intentar múltiples fuentes de token
+        token = None
         
-        if not supabase_url or not supabase_key:
-            return None, "Credenciales de Supabase no configuradas"
+        # 1. Desde session
+        if 'access_token' in session:
+            token = session['access_token']
+            logger.info("Token obtenido desde session")
         
-        client = create_client(supabase_url, supabase_key)
+        # 2. Desde g.user
+        elif hasattr(g, 'user') and g.user:
+            token = g.user.get('access_token')
+            logger.info("Token obtenido desde g.user")
         
-        # Si tenemos tokens JWT, usarlos para autenticación RLS
-        if access_token:
+        # 3. Desde auth_manager si está disponible
+        else:
             try:
-                # Establecer la sesión en el cliente para RLS
-                client.auth.set_session(access_token, refresh_token or '')
-                logger.info("Cliente autenticado con JWT para RLS")
-                return client, None
-            except Exception as session_error:
-                logger.error(f"Error al establecer sesión JWT: {str(session_error)}")
-                # Continuar con fallback
+                from auth_manager import AuthManager
+                auth_manager = AuthManager()
+                current_user = auth_manager.load_current_user()
+                if current_user and 'access_token' in current_user:
+                    token = current_user['access_token']
+                    logger.info("Token obtenido desde auth_manager")
+            except ImportError:
+                pass
         
-        # Fallback: usar cliente sin JWT (puede requerir políticas RLS menos restrictivas)
-        logger.warning("Usando cliente sin JWT - verificar políticas RLS")
-        return client, None
+        if not token:
+            logger.error("No se encontró token de acceso en ninguna fuente")
+            logger.error(f"Session: {dict(session)}")
+            logger.error(f"g.user: {getattr(g, 'user', 'No disponible')}")
+            return None
+            
+        logger.info(f"Token encontrado: {token[:10]}...")
         
+        # Crear cliente autenticado
+        auth_client = create_client(supabase_url, supabase_key)
+        
+        # Configurar autenticación usando headers
+        auth_client.postgrest.auth(token)
+        
+        # Verificar que el cliente esté autenticado
+        try:
+            # Probar con una consulta simple
+            test_result = auth_client.table('usuarios').select('id').limit(1).execute()
+            logger.info("Cliente autenticado exitosamente")
+            return auth_client
+        except Exception as e:
+            logger.error(f"Error verificando autenticación: {e}")
+            return None
+            
     except Exception as e:
-        logger.error(f"Error general en cliente autenticado: {str(e)}")
-        return None, f"Error al crear cliente autenticado: {str(e)}"
-
-def login_required_api(f):
-    """Decorador para requerir autenticación en endpoints API."""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or not g.user or not g.user.get('user_uuid'):
-            return jsonify({"success": False, "error": "Autenticación requerida"}), 401
-        return f(*args, **kwargs)
-    return decorated_function
-
-def validate_username(username):
-    """Valida formato y disponibilidad del username."""
-    if not username or len(username) < 3 or len(username) > 80:
-        return False, "Username debe tener entre 3 y 80 caracteres"
-    
-    if not re.match(r'^[a-zA-Z0-9_-]+$', username):
-        return False, "Username solo puede contener letras, números, guiones y underscores"
-    
-    # Verificar disponibilidad
-    try:
-        response = db.client.table('usuarios')\
-            .select('id')\
-            .eq('username', username)\
-            .execute()
-        
-        if response.data:
-            return False, "Username ya está en uso"
-    except Exception as e:
-        return False, f"Error al verificar username: {str(e)}"
-    
-    return True, None
-
-def validate_email(email):
-    """Valida formato de email."""
-    if not email:
-        return True, None
-    
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    if not re.match(pattern, email):
-        return False, "Formato de email inválido"
-    
-    return True, None
+        logger.error(f"Error completo en get_authenticated_client: {e}")
+        return None
 
 @edit_bp.route('/api/edit/usuarios', methods=['POST'])
-@login_required_api
 def edit_usuarios():
-    """
-    Edita datos del usuario autenticado en la tabla usuarios.
-    Solo permite editar username y role. tipo_usuario siempre es "Regular".
-    
-    POST /api/edit/usuarios
-    Body JSON: {username, role}
-    """
+    """Editar información de usuario"""
     try:
+        # Verificar autenticación
+        auth_client = get_authenticated_client()
+        if not auth_client:
+            return jsonify({"success": False, "error": "Error de autenticación"}), 401
+        
         user_uuid = g.user.get('user_uuid')
         if not user_uuid:
             return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
@@ -114,329 +89,187 @@ def edit_usuarios():
         if not data:
             return jsonify({"success": False, "error": "Datos requeridos"}), 400
         
-        # Solo permitir username y role
-        update_data = {'tipo_usuario': 'Regular'}  # Forzar siempre Regular
+        # Actualizar campos sin validación restrictiva
+        valid_fields = ['username', 'tipo_usuario', 'role']
+        update_data = {}
         
-        # Validar username
-        if 'username' in data:
-            username = data['username']
-            is_valid, error = validate_username(username)
-            if not is_valid:
-                return jsonify({"success": False, "error": error}), 400
-            update_data['username'] = username
-        
-        # Validar role con opciones fijas
-        if 'role' in data:
-            role = data['role']
-            allowed_roles = ['APICULTOR', 'PROVEEDOR', 'PRESTADOR DE SERVICIOS']
-            if role not in allowed_roles:
-                return jsonify({"success": False, "error": f"Rol debe ser uno de: {', '.join(allowed_roles)}"}), 400
-            update_data['role'] = role
-        
-        if not update_data or len(update_data) <= 1:  # Solo tiene tipo_usuario
-            return jsonify({"success": False, "error": "No hay campos válidos para actualizar"}), 400
-        
-        # Obtener cliente autenticado
-        auth_client, error = get_authenticated_supabase_client()
-        if error:
-            logger.error(f"Error de autenticación: {error}")
-            return jsonify({"success": False, "error": "Error de autenticación"}), 401
-        
-        # Actualizar datos con cliente autenticado
-        logger.info(f"Actualizando usuario {user_uuid} con datos: {update_data}")
-        
-        try:
-            # Verificar si el usuario existe primero
-            check_result = auth_client.table('usuarios')\
-                .select('id')\
-                .eq('id', user_uuid)\
-                .execute()
-            
-            if not check_result.data:
-                logger.error(f"Usuario con ID {user_uuid} no encontrado en la tabla usuarios")
-                return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
-            
-            # Realizar la actualización
-            result = auth_client.table('usuarios')\
-                .update(update_data)\
-                .eq('id', user_uuid)\
-                .execute()
-            
-            logger.info(f"Respuesta de actualización: {result}")
-            logger.info(f"Datos actualizados: {result.data}")
-            logger.info(f"Conteo de datos: {len(result.data) if result.data else 0}")
-            
-            # Verificar si la actualización fue exitosa por el conteo de filas afectadas
-            if hasattr(result, 'count') and result.count is not None:
-                logger.info(f"Filas afectadas: {result.count}")
-            
-            # Siempre que no haya error, consideramos la actualización exitosa
-            if result.data and len(result.data) > 0:
-                return jsonify({
-                    "success": True,
-                    "message": "Datos de usuario actualizados correctamente",
-                    "data": result.data[0],
-                    "rows_affected": len(result.data)
-                })
-            else:
-                # Verificar si hay algún mensaje de error
-                if hasattr(result, 'error') and result.error:
-                    logger.error(f"Error en actualización: {result.error}")
-                    return jsonify({"success": False, "error": str(result.error)}), 500
-                else:
-                    # La actualización fue exitosa pero Supabase no retorna datos
-                    # Verificar que los datos realmente se actualizaron
-                    verification = auth_client.table('usuarios')\
-                        .select('*')\
-                        .eq('id', user_uuid)\
-                        .single()\
-                        .execute()
-                    
-                    if verification.data:
-                        logger.info(f"Verificación exitosa: {verification.data}")
-                        return jsonify({
-                            "success": True, 
-                            "message": "Datos actualizados exitosamente",
-                            "data": verification.data,
-                            "verified": True
-                        })
-                    else:
-                        logger.warning(f"No se pudieron verificar los datos actualizados")
-                        return jsonify({
-                            "success": True, 
-                            "message": "Datos actualizados exitosamente pero no verificados",
-                            "data": {"id": user_uuid, **update_data},
-                            "verified": False
-                        })
+        for field in valid_fields:
+            if field in data and data[field] is not None:
+                value = data[field]
                 
-        except Exception as db_error:
-            logger.error(f"Error en la consulta a la base de datos: {str(db_error)}")
-            logger.error(f"Tipo de error: {type(db_error)}")
-            return jsonify({"success": False, "error": f"Error en la base de datos: {str(db_error)}"}), 500
-            
-    except Exception as e:
-        logger.error(f"Error al editar usuarios: {str(e)}")
-        logger.error(f"Tipo de error: {type(e)}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        return jsonify({"success": False, "error": "Error interno del servidor"}), 500
-
-@edit_bp.route('/api/edit/ubicaciones', methods=['POST'])
-@login_required_api
-def edit_ubicaciones():
-    """
-    Endpoint simplificado para agregar una nueva ubicación del usuario.
-    Solo permite formato PLUS CODE o latitud/longitud literal.
-    Reemplaza la ubicación anterior del usuario.
-    
-    POST /api/edit/ubicaciones
-    Body JSON: {ubicacion}
-    """
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"success": False, "error": "Datos requeridos"}), 400
-        
-        # Solo aceptar formato PLUS CODE o lat/long
-        ubicacion_input = data.get('ubicacion', '').strip()
-        if not ubicacion_input:
-            return jsonify({"success": False, "error": "Ubicación requerida"}), 400
-        
-        # Solo aceptar formato PLUS CODE de Google Maps
-        if '+' not in ubicacion_input or len(ubicacion_input.split('+')) != 2:
-            return jsonify({"success": False, "error": "Formato inválido. Solo se acepta PLUS CODE de Google Maps (ej: CVV6+HJ7 Pichipehuenco, Lonquimay)"}), 400
-        
-        # Validar que tenga el formato básico de PLUS CODE
-        parts = ubicacion_input.split('+')
-        if len(parts[0]) < 4 or len(parts[1].split()[0]) < 2:
-            return jsonify({"success": False, "error": "PLUS CODE inválido. Use el formato de Google Maps (ej: CVV6+HJ7 Pichipehuenco)"}), 400
-        
-        ubicacion_data = {
-            'nombre': ubicacion_input,
-            'direccion': ubicacion_input,
-            'latitud': None,
-            'longitud': None,
-            'tipo_ubicacion': 'PLUS_CODE',
-            'descripcion': f'Ubicación PLUS CODE: {ubicacion_input}'
-        }
-        
-        # Agregar UUID del usuario
-        user_uuid = g.user.get('user_uuid')
-        if not user_uuid:
-            return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
-            
-        ubicacion_data['usuario_id'] = user_uuid
-        
-        # Obtener cliente autenticado
-        auth_client, error = get_authenticated_supabase_client()
-        if error:
-            logger.error(f"Error de autenticación: {error}")
-            return jsonify({"success": False, "error": "Error de autenticación"}), 401
-        
-        # Reemplazar ubicación existente: eliminar y crear nueva
-        auth_client.table('ubicaciones').delete().eq('usuario_id', user_uuid).execute()
-        result = auth_client.table('ubicaciones').insert(ubicacion_data).execute()
-        
-        if result.data:
-            return jsonify({"success": True, "message": "Ubicación actualizada exitosamente"})
-        else:
-            return jsonify({"success": False, "error": "Error al actualizar ubicación"}), 500
-            
-    except Exception as e:
-        logger.error(f"Error en edit_ubicaciones: {str(e)}")
-        return jsonify({"success": False, "error": "Error interno del servidor"}), 500
-
-@edit_bp.route('/api/edit/info_contacto', methods=['POST'])
-@login_required_api
-def edit_info_contacto():
-    """
-    Edita o crea información de contacto del usuario autenticado.
-    
-    POST /api/edit/info_contacto
-    Body JSON: {nombre_completo, nombre_empresa, correo_principal, telefono_principal, direccion, comuna, region}
-    """
-    try:
-        user_uuid = g.user.get('user_uuid')
-        if not user_uuid:
-            return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
-        
-        data = request.get_json()
-        if not data:
-            return jsonify({"success": False, "error": "Datos requeridos"}), 400
-        
-        # Validar campos requeridos
-        if 'nombre_completo' in data:
-            if not data['nombre_completo'] or len(data['nombre_completo']) < 2 or len(data['nombre_completo']) > 150:
-                return jsonify({"success": False, "error": "nombre_completo debe tener entre 2 y 150 caracteres"}), 400
-        
-        if 'correo_principal' in data and data['correo_principal']:
-            is_valid, error = validate_email(data['correo_principal'])
-            if not is_valid:
-                return jsonify({"success": False, "error": error}), 400
-        
-        # Preparar datos para actualización
-        allowed_fields = [
-            'nombre_completo', 'nombre_empresa', 'correo_principal',
-            'telefono_principal', 'direccion', 'comuna', 'region'
-        ]
-        update_data = {k: v for k, v in data.items() if k in allowed_fields}
+                # Solo validar username si se proporciona
+                if field == 'username' and value:
+                    if len(value) < 2 or len(value) > 80:
+                        return jsonify({"success": False, "error": "Username debe tener entre 2 y 80 caracteres"}), 400
+                    update_data['username'] = value
+                
+                elif field == 'username' and not value:
+                    update_data['username'] = value  # Permitir vacío
+                
+                elif field in ['tipo_usuario', 'role']:
+                    update_data[field] = value  # Permitir cualquier valor incluyendo vacío
         
         if not update_data:
-            return jsonify({"success": False, "error": "No hay campos válidos para actualizar"}), 400
+            return jsonify({"success": False, "error": "No hay campos para actualizar"}), 400
         
-        # Obtener cliente autenticado
-        auth_client, error = get_authenticated_supabase_client()
-        if error:
-            logger.error(f"Error de autenticación: {error}")
-            return jsonify({"success": False, "error": "Error de autenticación"}), 401
-        
-        # Verificar si existe registro
-        existing = auth_client.table('info_contacto')\
-            .select('id')\
-            .eq('usuario_id', user_uuid)\
-            .execute()
-        
-        if existing.data:
-            # Obtener cliente autenticado
-            auth_client, error = get_authenticated_supabase_client()
-            if error:
-                logger.error(f"Error de autenticación: {error}")
-                return jsonify({"success": False, "error": "Error de autenticación"}), 401
+        # Obtener auth_user_id desde la tabla usuarios usando el user_uuid
+        user_info = auth_client.table('usuarios').select('auth_user_id').eq('id', user_uuid).single().execute()
+        if not user_info.data:
+            return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
             
-            # Actualizar ubicación con cliente autenticado
-            result = auth_client.table('ubicaciones')\
-                .update({"ubicacion": ubicacion})\
-                .eq('usuario_id', user_uuid)\
-                .execute()
-        else:
-            # Crear nuevo
-            update_data['usuario_id'] = user_uuid
-            result = auth_client.table('info_contacto')\
-                .insert(update_data)\
-                .execute()
+        auth_user_id = user_info.data['auth_user_id']
+        logger.info(f"Usando auth_user_id: {auth_user_id}")
         
-        if result.data:
-            return jsonify({
-                "success": True,
-                "message": "Información de contacto actualizada correctamente",
-                "data": result.data[0]
-            })
-        else:
-            return jsonify({"success": False, "error": "No se pudieron actualizar los datos"}), 500
-            
-    except Exception as e:
-        logger.error(f"Error al editar info_contacto: {str(e)}")
-        return jsonify({"success": False, "error": "Error interno del servidor"}), 500
-
-@edit_bp.route('/api/debug/session', methods=['GET'])
-@login_required_api
-def debug_session():
-    """Endpoint de depuración para verificar tokens JWT en la sesión."""
-    try:
+        # Verificar unicidad de username si se está actualizando
+        if 'username' in update_data:
+            logger.info(f"Verificando unicidad de username: {update_data['username']}")
+            existing = auth_client.table('usuarios').select('id').eq('username', update_data['username']).neq('auth_user_id', auth_user_id).execute()
+            logger.info(f"Resultado verificación username: {existing.data}")
+            if existing.data:
+                logger.error(f"Username duplicado encontrado: {existing.data}")
+                return jsonify({"success": False, "error": "Username ya existe"}), 400
+            logger.info("Username disponible")
+        
+        # Agregar timestamp para forzar actualización en cambios de case
+        update_data['last_login'] = datetime.utcnow().isoformat()
+        
+        # Actualizar usuario usando auth_user_id para que coincida con RLS policy
+        logger.info(f"Actualizando usuario {user_uuid} con datos: {update_data}")
+        update_result = auth_client.table('usuarios').update(update_data).eq('auth_user_id', auth_user_id).execute()
+        logger.info(f"Resultado actualización: {update_result}")
+        
+        if not update_result.data or len(update_result.data) == 0:
+            logger.error("No se encontraron datos en la respuesta de actualización")
+            return jsonify({"success": False, "error": "No se pudo actualizar el usuario"}), 500
+        
+        # Obtener datos actualizados
+        logger.info("Obteniendo datos actualizados del usuario")
+        user_data = auth_client.table('usuarios').select('*').eq('id', user_uuid).single().execute()
+        logger.info(f"Datos obtenidos: {user_data.data}")
+        
         return jsonify({
             "success": True,
-            "session_data": {
-                "user_id": session.get('user_id'),
-                "access_token": session.get('access_token')[:20] + "..." if session.get('access_token') else None,
-                "refresh_token": session.get('refresh_token')[:20] + "..." if session.get('refresh_token') else None,
-                "has_access_token": bool(session.get('access_token')),
-                "has_refresh_token": bool(session.get('refresh_token'))
-            }
+            "message": "Usuario actualizado correctamente",
+            "data": user_data.data,
+            "profile_url": f"/profile/{user_uuid}"
         })
+        
     except Exception as e:
-        logger.error(f"Error en debug_session: {str(e)}")
+        logger.error(f"Error completo editando usuario: {e}")
+        logger.error(f"Tipo de error: {type(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({"success": False, "error": str(e)}), 500
 
-@edit_bp.route('/api/data/<table_name>', methods=['GET'])
-@login_required_api
-def get_user_data(table_name):
-    """
-    Obtiene los datos personales del usuario autenticado de una tabla específica.
-    
-    GET /api/data/<usuarios|info_contacto|ubicaciones>
-    """
+@edit_bp.route('/api/edit/ubicaciones', methods=['POST'])
+def edit_ubicaciones():
+    """Editar ubicaciones del usuario"""
     try:
+        auth_client = get_authenticated_client()
+        if not auth_client:
+            return jsonify({"success": False, "error": "Error de autenticación"}), 401
+        
         user_uuid = g.user.get('user_uuid')
         if not user_uuid:
             return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
         
-        allowed_tables = ['usuarios', 'info_contacto', 'ubicaciones']
-        if table_name not in allowed_tables:
-            return jsonify({"success": False, "error": "Tabla no permitida"}), 400
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "Datos requeridos"}), 400
         
-        # Obtener cliente autenticado
-        auth_client, error = get_authenticated_supabase_client()
-        if error:
-            logger.error(f"Error de autenticación: {error}")
-            return jsonify({"success": False, "error": "Error de autenticación"}), 401
+        # Obtener usuario_id desde UUID
+        usuario = auth_client.table('usuarios').select('id').eq('id', user_uuid).single().execute()
+        if not usuario.data:
+            return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
         
-        if table_name == 'usuarios':
-            result = auth_client.table('usuarios')\
-                .select('*')\
-                .eq('id', user_uuid)\
-                .single()\
-                .execute()
-        elif table_name == 'info_contacto':
-            result = auth_client.table('info_contacto')\
-                .select('*')\
-                .eq('usuario_id', user_uuid)\
-                .single()\
-                .execute()
-            if not result.data:
-                # No existe, crear nueva ubicación
-                result = auth_client.table('ubicaciones')\
-                    .insert({"usuario_id": user_uuid, "ubicacion": ubicacion})\
-                    .execute()
-        elif table_name == 'ubicaciones':
-            result = auth_client.table('ubicaciones')\
-                .select('*')\
-                .eq('usuario_id', user_uuid)\
-                .execute()
+        # Actualizar ubicaciones
+        update_data = {k: v for k, v in data.items() if k in ['direccion', 'ciudad', 'provincia', 'pais', 'codigo_postal']}
+        
+        if not update_data:
+            return jsonify({"success": False, "error": "No hay campos para actualizar"}), 400
+        
+        update_result = auth_client.table('ubicaciones').update(update_data).eq('usuario_id', user_uuid).execute()
+        
+        if not update_result.data or len(update_result.data) == 0:
+            return jsonify({"success": False, "error": "No se pudo actualizar ubicaciones"}), 500
         
         return jsonify({
             "success": True,
-            "data": result.data or ({} if table_name != 'ubicaciones' else [])
+            "message": "Ubicaciones actualizadas correctamente",
+            "data": update_result.data
         })
         
     except Exception as e:
-        logger.error(f"Error al obtener datos de {table_name}: {str(e)}")
-        return jsonify({"success": False, "error": "Error al obtener datos"}), 500
+        logger.error(f"Error editando ubicaciones: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@edit_bp.route('/api/data/usuarios', methods=['GET'])
+def get_usuario_data():
+    """Obtener datos del usuario autenticado para el formulario de edición"""
+    try:
+        auth_client = get_authenticated_client()
+        if not auth_client:
+            return jsonify({"success": False, "error": "Error de autenticación"}), 401
+        
+        user_uuid = g.user.get('user_uuid')
+        if not user_uuid:
+            return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
+        
+        # Obtener datos del usuario
+        usuario = auth_client.table('usuarios').select('*').eq('id', user_uuid).single().execute()
+        if not usuario.data:
+            return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
+        
+        # Obtener información de contacto
+        info_contacto = auth_client.table('info_contacto').select('*').eq('usuario_id', user_uuid).single().execute()
+        
+        # Obtener ubicaciones
+        ubicaciones = auth_client.table('ubicaciones').select('*').eq('usuario_id', user_uuid).single().execute()
+        
+        return jsonify({
+            "success": True,
+            "usuario": usuario.data,
+            "info_contacto": info_contacto.data or {},
+            "ubicaciones": ubicaciones.data or {}
+        })
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo datos de usuario: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@edit_bp.route('/api/edit/info_contacto', methods=['POST'])
+def edit_info_contacto():
+    """Editar información de contacto del usuario"""
+    try:
+        auth_client = get_authenticated_client()
+        if not auth_client:
+            return jsonify({"success": False, "error": "Error de autenticación"}), 401
+        
+        user_uuid = g.user.get('user_uuid')
+        if not user_uuid:
+            return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "Datos requeridos"}), 400
+        
+        # Actualizar información de contacto
+        update_data = {k: v for k, v in data.items() if k in ['correo_principal', 'telefono_principal', 'correo_secundario']}
+        
+        if not update_data:
+            return jsonify({"success": False, "error": "No hay campos para actualizar"}), 400
+        
+        update_result = auth_client.table('info_contacto').update(update_data).eq('usuario_id', user_uuid).execute()
+        
+        if not update_result.data or len(update_result.data) == 0:
+            return jsonify({"success": False, "error": "No se pudo actualizar información de contacto"}), 500
+        
+        return jsonify({
+            "success": True,
+            "message": "Información de contacto actualizada correctamente",
+            "data": update_result.data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error editando info_contacto: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500

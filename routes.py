@@ -607,24 +607,36 @@ def profile(user_id):
     Página de perfil de usuario con información completa y QR.
     
     GET /profile/<user_id>
-    - user_id: Puede ser el UUID completo o el segmento de 8 caracteres
+    - user_id: Puede ser el UUID completo, segmento de 8 caracteres, o username
     """
     try:
         import uuid
         user_uuid = None
         user_info = None
         
+        # Paso 1: Intentar buscar por UUID completo
         try:
             uuid.UUID(user_id)
             user_uuid = user_id
             
             user_response = searcher.supabase.table('usuarios').select('*').eq('id', user_uuid).execute()
-            if not user_response.data:
-                return render_template('pages/profile.html', error="Usuario no encontrado"), 404
-            user_info = user_response.data[0]
+            if user_response.data:
+                user_info = user_response.data[0]
+                logger.info(f"Usuario encontrado por UUID completo: {user_uuid}")
+            else:
+                logger.info(f"UUID válido pero no encontrado: {user_id}")
+                user_uuid = None
                 
         except ValueError:
+            # No es un UUID válido, continuar con otras búsquedas
+            logger.info(f"No es un UUID válido: {user_id}")
+            pass
+        
+        # Paso 2: Si no se encontró por UUID completo, intentar por segmento o username
+        if not user_info:
+            # Intentar buscar por segmento de UUID (8 caracteres)
             if len(user_id) == 8:
+                logger.info(f"Buscando por segmento de UUID: {user_id}")
                 search_response = searcher.supabase.table('usuarios')\
                     .select('*')\
                     .like('id', f'{user_id}%')\
@@ -634,23 +646,33 @@ def profile(user_id):
                 if search_response.data:
                     user_info = search_response.data[0]
                     user_uuid = user_info['id']
-                else:
-                    return render_template('pages/profile.html', error="Usuario no encontrado"), 404
-            else:
-                if len(user_id) >= 2:
-                    search_response = searcher.supabase.table('usuarios')\
-                        .select('*')\
-                        .ilike('username', f'%{user_id}%')\
-                        .limit(1)\
-                        .execute()
-                    
-                    if search_response.data:
-                        user_info = search_response.data[0]
-                        user_uuid = user_info['id']
-                    else:
-                        return render_template('pages/profile.html', error="Usuario no encontrado"), 404
-                else:
-                    return render_template('pages/profile.html', error="Por favor ingresa al menos 2 caracteres"), 400
+                    logger.info(f"Usuario encontrado por segmento de UUID: {user_uuid}")
+            
+            # Paso 3: Intentar buscar por username (igual que en la función buscar)
+            if not user_info and len(user_id) >= 2:
+                logger.info(f"Buscando por username: {user_id}")
+                search_response = searcher.supabase.table('usuarios')\
+                    .select('*')\
+                    .ilike('username', f'%{user_id}%')\
+                    .limit(10)\
+                    .execute()
+                
+                if search_response.data:
+                    user_info = search_response.data[0]
+                    user_uuid = user_info['id']
+                    logger.info(f"Usuario encontrado por username: {user_uuid}")
+        
+        # Si no se encontró el usuario después de todas las búsquedas
+        if not user_info or not user_uuid:
+            logger.warning(f"Usuario no encontrado con término: {user_id}")
+            return render_template('pages/profile.html', error="Usuario no encontrado"), 404
+        
+        # Si el término de búsqueda no coincide con el UUID real, redirigir a la URL correcta
+        if user_id != user_uuid:
+            logger.info(f"Redirigiendo de {user_id} a {user_uuid}")
+            return redirect(url_for('web.profile', user_id=user_uuid))
+            
+        # Si llegamos aquí, tenemos un usuario válido con user_uuid y user_info
         
         contact_response = db.client.table('info_contacto').select('*').eq('usuario_id', user_uuid).execute()
         contact_info = contact_response.data[0] if contact_response.data else {}
