@@ -652,19 +652,28 @@ def profile(user_id):
                 else:
                     return render_template('pages/profile.html', error="Por favor ingresa al menos 2 caracteres"), 400
         
-        contact_response = searcher.supabase.table('info_contacto').select('*').eq('usuario_id', user_uuid).execute()
+        contact_response = db.client.table('info_contacto').select('*').eq('usuario_id', user_uuid).execute()
         contact_info = contact_response.data[0] if contact_response.data else {}
         
-        locations_response = searcher.supabase.table('ubicaciones').select('*').eq('usuario_id', user_uuid).execute()
+        locations_response = db.client.table('ubicaciones').select('*').eq('usuario_id', user_uuid).execute()
         locations = locations_response.data if locations_response.data else []
         
         qr_url = url_for('api.get_user_qr', uuid_segment=user_uuid[:8], _external=True)
         
+        # Validar que se encontró información de contacto
+        if not contact_response.data:
+            logger.info(f"No se encontró información de contacto para usuario_id: {user_uuid}")
+        
         user_template_data = {
             'id': user_uuid,
             'nombre': user_info.get('username', 'Usuario'),
-            'email': contact_info.get('correo_personal', ''),
-            'telefono': user_info.get('telefono') or contact_info.get('telefono'),
+            'email': contact_info.get('correo_principal', ''),  # ✅ Corregido: correo_principal
+            'telefono': contact_info.get('telefono_principal', ''),  # ✅ Corregido: telefono_principal
+            'direccion': contact_info.get('direccion', ''),
+            'comuna': contact_info.get('comuna', ''),
+            'region': contact_info.get('region', ''),
+            'nombre_empresa': contact_info.get('nombre_empresa', ''),
+            'nombre_completo': contact_info.get('nombre_completo', ''),
             'ubicacion': locations[0].get('nombre') if locations else None,
             'descripcion': user_info.get('descripcion', ''),
             'especialidad': user_info.get('role', 'Apicultor'),

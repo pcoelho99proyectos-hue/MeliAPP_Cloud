@@ -164,12 +164,19 @@ def edit_usuarios():
             
             logger.info(f"Respuesta de actualización: {result}")
             logger.info(f"Datos actualizados: {result.data}")
+            logger.info(f"Conteo de datos: {len(result.data) if result.data else 0}")
             
-            if result.data:
+            # Verificar si la actualización fue exitosa por el conteo de filas afectadas
+            if hasattr(result, 'count') and result.count is not None:
+                logger.info(f"Filas afectadas: {result.count}")
+            
+            # Siempre que no haya error, consideramos la actualización exitosa
+            if result.data and len(result.data) > 0:
                 return jsonify({
                     "success": True,
                     "message": "Datos de usuario actualizados correctamente",
-                    "data": result.data[0]
+                    "data": result.data[0],
+                    "rows_affected": len(result.data)
                 })
             else:
                 # Verificar si hay algún mensaje de error
@@ -177,12 +184,30 @@ def edit_usuarios():
                     logger.error(f"Error en actualización: {result.error}")
                     return jsonify({"success": False, "error": str(result.error)}), 500
                 else:
-                    logger.warning(f"Actualización completada pero sin datos retornados")
-                    return jsonify({
-                        "success": True, 
-                        "message": "Datos actualizados exitosamente",
-                        "data": {"id": user_uuid, **update_data}
-                    })
+                    # La actualización fue exitosa pero Supabase no retorna datos
+                    # Verificar que los datos realmente se actualizaron
+                    verification = auth_client.table('usuarios')\
+                        .select('*')\
+                        .eq('id', user_uuid)\
+                        .single()\
+                        .execute()
+                    
+                    if verification.data:
+                        logger.info(f"Verificación exitosa: {verification.data}")
+                        return jsonify({
+                            "success": True, 
+                            "message": "Datos actualizados exitosamente",
+                            "data": verification.data,
+                            "verified": True
+                        })
+                    else:
+                        logger.warning(f"No se pudieron verificar los datos actualizados")
+                        return jsonify({
+                            "success": True, 
+                            "message": "Datos actualizados exitosamente pero no verificados",
+                            "data": {"id": user_uuid, **update_data},
+                            "verified": False
+                        })
                 
         except Exception as db_error:
             logger.error(f"Error en la consulta a la base de datos: {str(db_error)}")

@@ -342,7 +342,8 @@ async function submitForm(event, tableName) {
         if (result.success) {
             showToast(result.message || 'Datos guardados correctamente', 'success');
             setTimeout(() => {
-                window.location.href = '/profile';
+                // Redirigir al perfil del usuario actual
+                window.location.href = '/profile/{{ session.get("user_uuid", "") }}';
             }, 2000);
         } else {
             showToast(result.error || 'Error al guardar datos', 'error');
