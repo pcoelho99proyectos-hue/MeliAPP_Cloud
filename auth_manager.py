@@ -437,6 +437,36 @@ class AuthManager:
                 session['user_id'] = user.id
                 session['user_email'] = user.email
                 
+                # Obtener información del usuario para la sesión
+                try:
+                    user_info = db.client.table('usuarios')\
+                        .select('username')\
+                        .eq('auth_user_id', user.id)\
+                        .single()\
+                        .execute()
+                    
+                    if user_info.data:
+                        session['user_name'] = user_info.data['username']
+                    else:
+                        session['user_name'] = user.email  # Fallback al email
+                        
+                    # Obtener información de contacto
+                    contact_info = db.client.table('info_contacto')\
+                        .select('nombre_empresa')\
+                        .eq('usuario_id', user.id)\
+                        .single()\
+                        .execute()
+                    
+                    if contact_info.data:
+                        session['user_empresa'] = contact_info.data.get('nombre_empresa', '')
+                    else:
+                        session['user_empresa'] = ''
+                        
+                except Exception as e:
+                    current_app.logger.warning(f"Error al obtener info de usuario: {str(e)}")
+                    session['user_name'] = user.email
+                    session['user_empresa'] = ''
+                
                 # Verificar/crear usuario en base de datos
                 try:
                     # Buscar usuario existente por auth_user_id primero
