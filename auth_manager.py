@@ -85,7 +85,7 @@ class AuthManager:
     @classmethod
     def get_current_user_id(cls):
         """ID de usuario único y consistente"""
-        return session.get('user_id') or (g.user.get('id') if hasattr(g, 'user') else None)
+        return session.get('user_id') or (g.user.get('id') if hasattr(g, 'user') and g.user else None)
     
     @classmethod
     def is_user_authenticated(cls):
