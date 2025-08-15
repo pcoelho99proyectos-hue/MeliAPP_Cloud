@@ -119,32 +119,38 @@ def get_base_url():
     Función centralizada para obtener la URL base de la aplicación.
     Detecta automáticamente el entorno (desarrollo/producción).
     """
-    # Prioridad 1: Variable de entorno BASE_URL o VERCEL_URL
+    # Prioridad 1: BASE_URL explícito
     base_url = os.getenv('BASE_URL')
     if base_url:
         return base_url.rstrip('/')
     
-    # Prioridad 2: VERCEL_URL para producción
-    vercel_url = os.getenv('VERCEL_URL')
-    if vercel_url:
-        return f"https://{vercel_url}"
-    
-    # Prioridad 3: NEXT_PUBLIC_SITE_URL
+    # Prioridad 2: Site URL personalizada
     site_url = os.getenv('NEXT_PUBLIC_SITE_URL')
     if site_url:
         return site_url.rstrip('/')
     
-    # Prioridad 4: Detectar desde request (solo cuando hay contexto activo)
+    # Prioridad 3: Dominio personalizado para producción
+    custom_domain = "meli-app-v3.vercel.app"
+    if os.getenv('VERCEL') == '1':
+        return f"https://{custom_domain}"
+    
+    # Prioridad 4: VERCEL_URL (fallback)
+    vercel_url = os.getenv('VERCEL_URL')
+    if vercel_url:
+        return f"https://{vercel_url}"
+    
+    # Prioridad 5: Detectar desde request
     try:
         from flask import request
         scheme = request.headers.get('X-Forwarded-Proto', request.scheme)
         host = request.headers.get('X-Forwarded-Host', request.host)
-        # Si es producción, forzar HTTPS
-        if 'vercel.app' in host or 'meli-app' in host:
-            scheme = 'https'
+        
+        # Forzar dominio personalizado en producción
+        if 'vercel.app' in host:
+            return "https://meli-app-v3.vercel.app"
+        
         return f"{scheme}://{host}"
     except RuntimeError:
-        # No hay contexto de request, usar localhost por defecto
         return f"http://127.0.0.1:{PORT}"
 
 def print_welcome_message():
