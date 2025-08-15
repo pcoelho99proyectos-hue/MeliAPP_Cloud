@@ -440,26 +440,28 @@ class AuthManager:
                 # Obtener información del usuario para la sesión
                 try:
                     user_info = db.client.table('usuarios')\
-                        .select('username')\
+                        .select('id', 'username')\
                         .eq('auth_user_id', user.id)\
                         .single()\
                         .execute()
                     
                     if user_info.data:
+                        user_db_id = user_info.data['id']
                         session['user_name'] = user_info.data['username']
+                        
+                        # Obtener información de contacto usando el ID de la tabla usuarios
+                        contact_info = db.client.table('info_contacto')\
+                            .select('nombre_empresa')\
+                            .eq('usuario_id', user_db_id)\
+                            .single()\
+                            .execute()
+                        
+                        if contact_info.data:
+                            session['user_empresa'] = contact_info.data.get('nombre_empresa', '')
+                        else:
+                            session['user_empresa'] = ''
                     else:
                         session['user_name'] = user.email  # Fallback al email
-                        
-                    # Obtener información de contacto
-                    contact_info = db.client.table('info_contacto')\
-                        .select('nombre_empresa')\
-                        .eq('usuario_id', user.id)\
-                        .single()\
-                        .execute()
-                    
-                    if contact_info.data:
-                        session['user_empresa'] = contact_info.data.get('nombre_empresa', '')
-                    else:
                         session['user_empresa'] = ''
                         
                 except Exception as e:
