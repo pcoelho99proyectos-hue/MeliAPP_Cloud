@@ -14,45 +14,100 @@
             <div class="p-6">
                 <!-- Formulario de registro tradicional -->
                 <form id="registerForm" class="space-y-6">
+                    <!-- Username - Campo requerido -->
                     <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700">Correo electrónico</label>
+                        <label for="username" class="block text-sm font-medium text-gray-700">
+                            Nombre de usuario
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="username" name="username" required 
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                               placeholder="usuario123"
+                               minlength="3"
+                               maxlength="50">
+                        <p class="mt-1 text-xs text-gray-500">Mínimo 3 caracteres, solo letras y números</p>
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">
+                            Correo electrónico
+                            <span class="text-red-500">*</span>
+                        </label>
                         <input type="email" id="email" name="email" required 
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                               placeholder="tu@email.com">
+                        <p class="mt-1 text-xs text-gray-500">Te enviaremos un correo de confirmación</p>
                     </div>
-                    
+
+                    <!-- Confirmar Email -->
                     <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
-                        <input type="password" id="password" name="password" required minlength="6"
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500">
-                        <p class="mt-1 text-xs text-gray-500">Mínimo 6 caracteres</p>
+                        <label for="confirm_email" class="block text-sm font-medium text-gray-700">
+                            Confirmar correo electrónico
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <input type="email" id="confirm_email" name="confirm_email" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                               placeholder="tu@email.com">
                     </div>
-                    
+
+                    <!-- Contraseña -->
                     <div>
-                        <label for="confirm_password" class="block text-sm font-medium text-gray-700">Confirmar contraseña</label>
-                        <input type="password" id="confirm_password" name="confirm_password" required minlength="6"
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                        <label for="password" class="block text-sm font-medium text-gray-700">
+                            Contraseña
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <input type="password" id="password" name="password" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                               minlength="6"
+                               placeholder="••••••••">
+                        <div class="mt-1 text-xs text-gray-500">
+                            <p>Requisitos: mínimo 6 caracteres</p>
+                        </div>
                     </div>
-                    
+
+                    <!-- Confirmar Contraseña -->
                     <div>
-                        <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre completo</label>
-                        <input type="text" id="nombre" name="nombre" required
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                        <label for="confirm_password" class="block text-sm font-medium text-gray-700">
+                            Confirmar contraseña
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <input type="password" id="confirm_password" name="confirm_password" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                               placeholder="••••••••">
                     </div>
-                    
+
+                    <!-- Nombre Completo -->
                     <div>
-                        <label for="telefono" class="block text-sm font-medium text-gray-700">Teléfono (opcional)</label>
+                        <label for="nombre_completo" class="block text-sm font-medium text-gray-700">
+                            Nombre completo
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="nombre_completo" name="nombre_completo" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                               placeholder="Juan Pérez">
+                    </div>
+
+                    <!-- Teléfono -->
+                    <div>
+                        <label for="telefono" class="block text-sm font-medium text-gray-700">Teléfono</label>
                         <input type="tel" id="telefono" name="telefono"
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                               placeholder="+34 600 123 456">
                     </div>
-                    
+
+                    <!-- Tipo de Usuario -->
                     <div>
-                        <label for="tipo_usuario" class="block text-sm font-medium text-gray-700">Tipo de usuario</label>
-                        <select id="tipo_usuario" name="tipo_usuario" required
-                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500">
-                            <option value="">Selecciona una opción</option>
-                            <option value="apicultor">Apicultor</option>
-                            <option value="consumidor">Consumidor</option>
-                            <option value="distribuidor">Distribuidor</option>
+                        <label for="role" class="block text-sm font-medium text-gray-700">
+                            Tipo de usuario
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <select id="role" name="role" required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500 bg-white">
+                            <option value="">Selecciona tu rol</option>
+                            <option value="apicultor">🐝 Apicultor</option>
+                            <option value="consumidor">👤 Consumidor</option>
+                            <option value="distribuidor">📦 Distribuidor</option>
                         </select>
                     </div>
                     
@@ -109,18 +164,112 @@
 </div>
 
 <script>
-// Configuración para Google OAuth
-const googleOAuthConfig = {
-    clientId: 'tu-client-id-google',
-    redirectUri: window.location.origin + '/auth/callback',
-    scope: 'email profile openid'
-};
+// Validación en tiempo real
+const form = document.getElementById('registerForm');
+const username = document.getElementById('username');
+const email = document.getElementById('email');
+const confirmEmail = document.getElementById('confirm_email');
+const password = document.getElementById('password');
+const confirmPassword = document.getElementById('confirm_password');
 
-// Registro tradicional
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
+// Funciones de validación
+function showFieldError(input, message) {
+    const errorDiv = input.parentElement.querySelector('.field-error');
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.classList.remove('hidden');
+    }
+    input.classList.add('border-red-500');
+    input.classList.remove('border-green-500');
+}
+
+function clearFieldError(input) {
+    const errorDiv = input.parentElement.querySelector('.field-error');
+    if (errorDiv) {
+        errorDiv.classList.add('hidden');
+    }
+    input.classList.remove('border-red-500');
+}
+
+function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+function validateUsername(username) {
+    return /^[a-zA-Z0-9_]+$/.test(username);
+}
+
+// Validación en tiempo real
+username.addEventListener('blur', function() {
+    if (this.value.length < 3) {
+        showFieldError(this, 'El nombre de usuario debe tener al menos 3 caracteres');
+    } else if (!validateUsername(this.value)) {
+        showFieldError(this, 'Solo se permiten letras, números y guiones bajos');
+    } else {
+        clearFieldError(this);
+        this.classList.add('border-green-500');
+    }
+});
+
+email.addEventListener('blur', function() {
+    if (!validateEmail(this.value)) {
+        showFieldError(this, 'Por favor ingresa un email válido');
+    } else {
+        clearFieldError(this);
+        this.classList.add('border-green-500');
+    }
+});
+
+confirmEmail.addEventListener('blur', function() {
+    if (this.value !== email.value) {
+        showFieldError(this, 'Los emails no coinciden');
+    } else {
+        clearFieldError(this);
+        this.classList.add('border-green-500');
+    }
+});
+
+password.addEventListener('blur', function() {
+    if (this.value.length < 6) {
+        showFieldError(this, 'La contraseña debe tener al menos 6 caracteres');
+    } else {
+        clearFieldError(this);
+        this.classList.add('border-green-500');
+    }
+});
+
+confirmPassword.addEventListener('blur', function() {
+    if (this.value !== password.value) {
+        showFieldError(this, 'Las contraseñas no coinciden');
+    } else {
+        clearFieldError(this);
+        this.classList.add('border-green-500');
+    }
+});
+
+// Funciones de mensajes
+function showError(message) {
+    const errorMessage = document.getElementById('errorMessage');
+    const errorText = document.getElementById('errorText');
+    errorText.textContent = message;
+    errorMessage.classList.remove('hidden');
+    errorMessage.scrollIntoView({ behavior: 'smooth' });
+}
+
+function showSuccess(message) {
+    const successMessage = document.getElementById('successMessage');
+    const successText = document.getElementById('successText');
+    successText.textContent = message;
+    successMessage.classList.remove('hidden');
+    successMessage.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Registro tradicional con validación completa
+form.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const submitBtn = form.querySelector('button[type="submit"]');
     const submitText = document.getElementById('submitText');
     const loadingText = document.getElementById('loadingText');
     const errorMessage = document.getElementById('errorMessage');
@@ -130,17 +279,31 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     errorMessage.classList.add('hidden');
     successMessage.classList.add('hidden');
     
-    // Validar contraseñas
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirm_password').value;
+    // Validación final
+    const errors = [];
     
-    if (password !== confirmPassword) {
-        showError('Las contraseñas no coinciden');
-        return;
+    if (username.value.length < 3) {
+        errors.push('El nombre de usuario debe tener al menos 3 caracteres');
     }
     
-    if (password.length < 6) {
-        showError('La contraseña debe tener al menos 6 caracteres');
+    if (!validateEmail(email.value)) {
+        errors.push('Por favor ingresa un email válido');
+    }
+    
+    if (email.value !== confirmEmail.value) {
+        errors.push('Los emails no coinciden');
+    }
+    
+    if (password.value.length < 6) {
+        errors.push('La contraseña debe tener al menos 6 caracteres');
+    }
+    
+    if (password.value !== confirmPassword.value) {
+        errors.push('Las contraseñas no coinciden');
+    }
+    
+    if (errors.length > 0) {
+        showError(errors[0]);
         return;
     }
     
@@ -150,10 +313,17 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     loadingText.classList.remove('hidden');
     
     try {
-        const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData);
+        const formData = new FormData(form);
+        const data = {
+            username: formData.get('username'),
+            email: formData.get('email'),
+            password: formData.get('password'),
+            nombre_completo: formData.get('nombre_completo'),
+            telefono: formData.get('telefono'),
+            role: formData.get('role')
+        };
         
-        const response = await fetch('{{ url_for('auth.register') }}', {
+        const response = await fetch("{{ url_for('web.register') }}", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -182,21 +352,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 
 // Registro con Google
 function loginWithGoogle() {
-    window.location.href = '{{ url_for('auth.google') }}';
-}
-
-function showError(message) {
-    const errorMessage = document.getElementById('errorMessage');
-    const errorText = document.getElementById('errorText');
-    errorText.textContent = message;
-    errorMessage.classList.remove('hidden');
-}
-
-function showSuccess(message) {
-    const successMessage = document.getElementById('successMessage');
-    const successText = document.getElementById('successText');
-    successText.textContent = message;
-    successMessage.classList.remove('hidden');
+    window.location.href = "{{ url_for('web.api_google_auth') }}";
 }
 </script>
 {% endblock %}
