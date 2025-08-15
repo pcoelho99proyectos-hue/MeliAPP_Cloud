@@ -478,7 +478,7 @@ class AuthManager:
                         # Verificar si existe por email/username
                         existing_by_email = db.client.table('usuarios').select('*').eq('username', user.email).execute()
                         
-                        if existing_by_email.data:
+                        if existing_by_email.data and len(existing_by_email.data) > 0:
                             # Actualizar el auth_user_id existente
                             db.client.table('usuarios').update({'auth_user_id': user.id}).eq('username', user.email).execute()
                             current_app.logger.info(f"Usuario actualizado: {user.email}")
@@ -492,8 +492,20 @@ class AuthManager:
                                 'status': 'active',
                                 'activo': True
                             }
-                            db.client.table('usuarios').insert(new_user).execute()
+                            insert_result = db.client.table('usuarios').insert(new_user).execute()
                             current_app.logger.info(f"Nuevo usuario creado: {user.email}")
+                            
+                            # Crear registro de contacto vacío para el nuevo usuario
+                            try:
+                                if insert_result.data and len(insert_result.data) > 0:
+                                    user_db_id = insert_result.data[0]['id']
+                                    db.client.table('info_contacto').insert({
+                                        'usuario_id': user_db_id,
+                                        'nombre_empresa': '',
+                                        'correo_principal': user.email
+                                    }).execute()
+                            except Exception as e:
+                                current_app.logger.warning(f"Error al crear info_contacto: {str(e)}")
                     else:
                         current_app.logger.info(f"Usuario existente: {user.email}")
                     
