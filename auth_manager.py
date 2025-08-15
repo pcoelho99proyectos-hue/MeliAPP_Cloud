@@ -465,11 +465,27 @@ class AuthManager:
                     else:
                         current_app.logger.info(f"Usuario existente: {user.email}")
                     
-                    return {
-                        "success": True,
-                        "redirect_url": "/profile",
-                        "user": user
-                    }
+                    # Obtener el ID del usuario de nuestra tabla
+                    user_response = db.client.table('usuarios')\
+                        .select('id')\
+                        .eq('auth_user_id', user.id)\
+                        .single()\
+                        .execute()
+                    
+                    if user_response.data:
+                        user_id = user_response.data['id']
+                        return {
+                            "success": True,
+                            "redirect_url": f"/profile/{user_id}",
+                            "user": user
+                        }
+                    else:
+                        # Fallback si no se encuentra el usuario
+                        return {
+                            "success": True,
+                            "redirect_url": "/search",
+                            "user": user
+                        }
                     
                 except Exception as db_error:
                     current_app.logger.error(f"Error en base de datos: {str(db_error)}")
