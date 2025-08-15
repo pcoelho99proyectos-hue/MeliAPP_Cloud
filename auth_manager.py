@@ -263,8 +263,8 @@ class AuthManager:
                 "status_code": 500
             }
     
-    @classmethod
-    def _get_base_url(cls):
+    @staticmethod
+    def _get_base_url():
         """
         Obtiene la URL base dinámica según el entorno.
         Usa la función centralizada get_base_url() de app.py
@@ -272,11 +272,9 @@ class AuthManager:
         Returns:
             str: URL base completa
         """
-        # Cachear la función para evitar import repetido
-        if not hasattr(cls, '_cached_base_url_func'):
-            from app import get_base_url
-            cls._cached_base_url_func = get_base_url
-        return cls._cached_base_url_func()
+        # Importar dinámicamente para evitar import circular
+        from app import get_base_url
+        return get_base_url()
     
     @staticmethod
     def init_google_oauth_flow(is_api=False):
