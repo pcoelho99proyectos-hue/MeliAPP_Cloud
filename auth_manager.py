@@ -486,7 +486,7 @@ class AuthManager:
                             db.client.table('usuarios').update({'auth_user_id': user.id}).eq('username', user.email).execute()
                             current_app.logger.info(f"Usuario existente actualizado: {user.email}")
                         else:
-                            # Crear nuevo usuario
+                            # Crear nuevo usuario con todos los registros vacíos necesarios
                             new_user = {
                                 'username': user.email,
                                 'auth_user_id': user.id,
@@ -499,15 +499,26 @@ class AuthManager:
                             user_db_id = insert_result.data[0]['id']
                             current_app.logger.info(f"Nuevo usuario creado: {user.email}")
                             
-                            # Crear contacto vacío
+                            # Crear registros vacíos esenciales según esquema actual
                             try:
+                                # Solo info de contacto vacío (campos según esquema actual)
                                 db.client.table('info_contacto').insert({
                                     'usuario_id': user_db_id,
+                                    'nombre_completo': '',
                                     'nombre_empresa': '',
-                                    'correo_principal': user.email
+                                    'correo_principal': user.email,
+                                    'telefono_principal': '',
+                                    'direccion': '',
+                                    'comuna': '',
+                                    'region': ''
                                 }).execute()
+                                
+                                # No crear ubicaciones ni origenes_botanicos vacíos
+                                # El usuario los agregará manualmente cuando lo necesite
+                                
                             except Exception as e:
-                                current_app.logger.warning(f"Error al crear info_contacto: {str(e)}")
+                                current_app.logger.warning(f"Error al crear registros vacíos: {str(e)}")
+                                current_app.logger.warning(f"Detalles del error: {str(e)}")
                     
                     # Guardar ID de usuario para redirección
                     session['user_uuid'] = user_db_id
