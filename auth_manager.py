@@ -10,17 +10,13 @@ Este módulo maneja todo lo relacionado con:
 """
 
 import logging
-import secrets
-import hashlib
-import base64
 from functools import wraps
-from flask import session, request, redirect, url_for, flash, g, jsonify
+from flask import session, request, redirect, url_for, flash, g, jsonify, current_app
 import uuid
 from datetime import datetime
 from supabase_client import db
 
-logger = logging.getLogger(__name__)
-
+# logger = logging.getLogger(__name__)
 
 class AuthManager:
     """Gestor centralizado de autenticación y sesiones de usuario."""
@@ -144,11 +140,11 @@ class AuthManager:
                 if session_data:
                     session['access_token'] = session_data.access_token
                     session['refresh_token'] = session_data.refresh_token
-                    logger.info(f"JWT tokens stored in session for user: {user.email}")
+                    current_app.logger.info(f"JWT tokens stored in session for user: {user.email}")
                 else:
-                    logger.error("No session data in auth response")
+                    current_app.logger.error("No session data in auth response")
             except Exception as e:
-                logger.error(f"Error almacenando tokens JWT: {str(e)}")
+                current_app.logger.error(f"Error almacenando tokens JWT: {str(e)}")
             
             return {
                 "success": True,
@@ -159,7 +155,7 @@ class AuthManager:
             
         except Exception as e:
             error_message = str(e)
-            logger.error(f"Error en login: {error_message}")
+            current_app.logger.error(f"Error en login: {error_message}")
             
             # Manejar específicamente errores de autenticación de Supabase
             if "Invalid login credentials" in error_message:
@@ -250,7 +246,7 @@ class AuthManager:
                     "correo_principal": email
                 }).execute()
             except Exception as e:
-                logger.warning(f"Error al crear info_contacto: {str(e)}")
+                current_app.logger.warning(f"Error al crear info_contacto: {str(e)}")
             
             return {
                 "success": True,
@@ -260,7 +256,7 @@ class AuthManager:
             }
             
         except Exception as e:
-            logger.error(f"Error en registro: {str(e)}")
+            current_app.logger.error(f"Error en registro: {str(e)}")
             return {
                 "success": False,
                 "error": "Error al crear cuenta",
@@ -283,7 +279,7 @@ class AuthManager:
         else:
             # Desarrollo local
             return request.url_root.rstrip('/')
-
+    
     @staticmethod
     def init_google_oauth_flow(is_api=False):
         """
@@ -296,8 +292,13 @@ class AuthManager:
             dict: URL de redirección para Google OAuth
         """
         try:
+            current_app.logger.info(f" Iniciando init_google_oauth_flow - is_api: {is_api}")
+            
             base_url = AuthManager._get_base_url()
             redirect_uri = f"{base_url}/auth/callback"
+            
+            current_app.logger.info(f" URL base detectada: {base_url}")
+            current_app.logger.info(f" URL de redirección: {redirect_uri}")
             
             auth_response = db.client.auth.sign_in_with_oauth({
                 "provider": "google",
@@ -308,13 +309,19 @@ class AuthManager:
                 }
             })
             
-            if auth_response.url:
+            current_app.logger.info(f" Respuesta de Supabase auth recibida")
+            current_app.logger.info(f" auth_response type: {type(auth_response)}")
+            
+            if hasattr(auth_response, 'url'):
+                current_app.logger.info(f" URL generada exitosamente: {auth_response.url}")
                 return {
                     "success": True,
                     "url": auth_response.url,
                     "url_web": auth_response.url if not is_api else None
                 }
             else:
+                current_app.logger.error(" auth_response no tiene atributo 'url'")
+                current_app.logger.error(f" auth_response: {auth_response}")
                 return {
                     "success": False,
                     "error": "Error al generar URL de Google",
@@ -322,7 +329,10 @@ class AuthManager:
                 }
                 
         except Exception as e:
-            logger.error(f"Error en Google auth: {str(e)}")
+            current_app.logger.error(f" Error en init_google_oauth_flow: {str(e)}")
+            current_app.logger.error(f" Tipo de error: {type(e).__name__}")
+            import traceback
+            current_app.logger.error(f" Traceback: {traceback.format_exc()}")
             return {
                 "success": False,
                 "error": "Error al conectar con Google",
@@ -361,76 +371,114 @@ class AuthManager:
             dict: Resultado del proceso de autenticación
         """
         try:
-            logger.info(f"Procesando callback - código: {code}")
+            current_app.logger.info(f" INICIANDO handle_google_callback")
+            current_app.logger.info(f" Código recibido: {code}")
+            current_app.logger.info(f" Tipo de código: {type(code)}")
+            current_app.logger.info(f" Sesión actual: {dict(session)}")
             
-            # Si no hay código, el token está en la sesión de Supabase
+            # Si no hay código, verificar si hay sesión activa
             if not code:
-                logger.warning("No se recibió código, verificando sesión activa")
+                current_app.logger.warning(" No se recibió código, verificando sesión activa")
+                
+                # Verificar si ya hay un usuario autenticado
+                try:
+                    current_user = db.client.auth.get_user()
+                    if current_user and current_user.user:
+                        current_app.logger.info(f" Usuario ya autenticado encontrado: {current_user.user.email}")
+                        return {
+                            "success": True,
+                            "message": "Usuario ya autenticado",
+                            "user": current_user.user
+                        }
+                except Exception as auth_error:
+                    current_app.logger.error(f" Error al verificar sesión activa: {auth_error}")
+            
+            current_app.logger.info(" Obteniendo usuario desde Supabase Auth...")
             
             # Obtener usuario actual desde Supabase Auth
-            try:
-                user_response = db.client.auth.get_user()
-                
-                if user_response and user_response.user:
-                    user = user_response.user
-                    logger.info(f"Usuario autenticado: {user.email}")
-                else:
-                    logger.error("No hay usuario autenticado")
-                    return {
-                        "success": False,
-                        "redirect_url": "/register"
-                    }
-                    
-            except Exception as e:
-                logger.error(f"Error al obtener usuario: {e}")
+            user = db.client.auth.get_user()
+            
+            if not user:
+                current_app.logger.error(" No se pudo obtener usuario desde Supabase Auth")
+                current_app.logger.error(f" Respuesta de get_user(): {user}")
                 return {
                     "success": False,
-                    "redirect_url": "/register"
+                    "error": "Usuario no encontrado",
+                    "status_code": 404
                 }
-                logger.info(f"Usuario autenticado: {user.email}")
-                
-                # Verificar si ya existe en info_contacto
-                contact_response = db.client.table('info_contacto')\
-                    .select('id')\
-                    .eq('usuario_id', str(user.id))\
-                    .execute()
-                
-                if not contact_response.data:
-                    # Crear entrada en info_contacto
-                    contact_data = {
-                        'usuario_id': str(user.id),
-                        'nombre': user.user_metadata.get('full_name', ''),
-                        'email': user.email,
-                        'telefono': user.user_metadata.get('phone', ''),
-                        'created_at': datetime.utcnow().isoformat()
-                    }
-                    
-                    db.client.table('info_contacto').insert(contact_data).execute()
-                    logger.info(f"Nuevo usuario registrado: {user.email}")
-                
-                # Guardar en sesión de Flask
-                session['user_id'] = str(user.id)
-                session['email'] = user.email
-                session['user_name'] = user.user_metadata.get('full_name', user.email)
-                
+            
+            current_app.logger.info(f" Usuario autenticado exitosamente: {user.user.email}")
+            current_app.logger.info(f" ID de usuario: {user.user.id}")
+            current_app.logger.info(f" Metadata: {user.user.user_metadata}")
+            
+            # Guardar datos del usuario en la sesión
+            session['user_id'] = user.user.id
+            session['user_email'] = user.user.email
+            session['user_metadata'] = user.user.user_metadata
+            
+            current_app.logger.info(" Datos guardados en sesión")
+            current_app.logger.info(f" Sesión actualizada: {dict(session)}")
+            
+            # Verificar si el usuario existe en nuestra base de datos
+            current_app.logger.info(f" Buscando usuario existente: {user.user.email}")
+            existing_user = db.client.table('usuarios').select('*').eq('email', user.user.email).execute()
+            
+            current_app.logger.info(f" Resultado búsqueda usuario: {existing_user}")
+            
+            if existing_user.data:
+                current_app.logger.info(f" Usuario existente encontrado: {user.user.email}")
+                current_app.logger.info(f" Datos usuario existente: {existing_user.data[0]}")
                 return {
                     "success": True,
-                    "redirect_url": "/"
+                    "message": "Usuario autenticado exitosamente",
+                    "user": existing_user.data[0]
                 }
             else:
-                logger.error("No se pudo obtener el usuario de Supabase")
-                return {
-                    "success": False,
-                    "redirect_url": "/register"
+                current_app.logger.info(f" Nuevo usuario detectado: {user.user.email}")
+                
+                # Crear nuevo usuario
+                new_user_data = {
+                    'email': user.user.email,
+                    'nombre': user.user.user_metadata.get('full_name', user.user.email),
+                    'fecha_registro': datetime.now().isoformat(),
+                    'google_id': user.user.id,
+                    'avatar_url': user.user.user_metadata.get('avatar_url', '')
                 }
                 
+                current_app.logger.info(f" Datos para nuevo usuario: {new_user_data}")
+                
+                result = db.client.table('usuarios').insert(new_user_data).execute()
+                
+                current_app.logger.info(f" Resultado inserción: {result}")
+                
+                if result.data:
+                    current_app.logger.info(f" Nuevo usuario creado exitosamente: {user.user.email}")
+                    current_app.logger.info(f" Datos usuario creado: {result.data[0]}")
+                    return {
+                        "success": True,
+                        "message": "Usuario registrado exitosamente",
+                        "user": result.data[0]
+                    }
+                else:
+                    current_app.logger.error(f" Error al crear usuario: {user.user.email}")
+                    current_app.logger.error(f" Error detalles: {result}")
+                    return {
+                        "success": False,
+                        "error": "Error al registrar usuario",
+                        "status_code": 500
+                    }
+                
         except Exception as e:
-            logger.error(f"Error en callback: {str(e)}")
+            current_app.logger.error(f" ERROR CRÍTICO en handle_google_callback: {str(e)}")
+            current_app.logger.error(f" Tipo de error: {type(e).__name__}")
+            import traceback
+            current_app.logger.error(f" Traceback completo: {traceback.format_exc()}")
             return {
                 "success": False,
-                "redirect_url": "/register"
+                "error": "Error en el proceso de autenticación",
+                "status_code": 500
             }
-    
+
     @staticmethod
     def api_register(data):
         """
