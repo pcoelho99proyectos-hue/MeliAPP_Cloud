@@ -456,11 +456,20 @@ class AuthManager:
                     
             except Exception as exchange_error:
                 current_app.logger.error(f"Error en exchange_code_for_session: {str(exchange_error)}")
+                current_app.logger.error(f"Tipo de error: {type(exchange_error).__name__}")
+                current_app.logger.error(f"Mensaje de error: {str(exchange_error)}")
                 import traceback
                 current_app.logger.error(traceback.format_exc())
+                
+                # Verificar si es error de URL no autorizada
+                error_msg = str(exchange_error).lower()
+                if "redirect" in error_msg or "url" in error_msg or "unauthorized" in error_msg:
+                    current_app.logger.error("ERROR: URL de redirección no autorizada en Supabase Dashboard")
+                    current_app.logger.error("SOLUCIÓN: Agregar https://meli-app-v3.vercel.app/auth/callback en Supabase Dashboard")
+                
                 return {
                     "success": False,
-                    "error": "Error al intercambiar código",
+                    "error": f"Error al intercambiar código: {str(exchange_error)}",
                     "redirect_url": "/register?error=exchange_failed"
                 }
             
