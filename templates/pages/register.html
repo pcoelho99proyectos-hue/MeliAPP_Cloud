@@ -109,6 +109,13 @@
 </div>
 
 <script>
+// Configuración para Google OAuth
+const googleOAuthConfig = {
+    clientId: 'tu-client-id-google',
+    redirectUri: window.location.origin + '/auth/callback',
+    scope: 'email profile openid'
+};
+
 // Registro tradicional
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -146,7 +153,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData);
         
-        const response = await fetch('/api/auth/register', {
+        const response = await fetch('{{ url_for('auth.register') }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -175,7 +182,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 
 // Registro con Google
 function loginWithGoogle() {
-    window.location.href = '/api/auth/google';
+    window.location.href = '{{ url_for('auth.google') }}';
 }
 
 function showError(message) {
