@@ -352,7 +352,7 @@ form.addEventListener('submit', async (e) => {
 
 // Registro con Google
 function loginWithGoogle() {
-    window.location.href = "{{ url_for('web.google') }}";
+    window.location.href = "{{ url_for('web.api_google_auth') }}";
 }
 </script>
 {% endblock %}
