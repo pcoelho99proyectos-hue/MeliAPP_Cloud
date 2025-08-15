@@ -1,12 +1,14 @@
 from flask import Blueprint, request, jsonify, g
 import logging
 from modify_DB import db_modifier, update_user_data
+from auth_manager import auth_manager
 
 logger = logging.getLogger(__name__)
 
 edit_bp = Blueprint('edit_user_data', __name__)
 
 @edit_bp.route('/api/edit/usuarios', methods=['POST'])
+@auth_manager.login_required
 def edit_usuarios():
     """Editar información de usuario usando el módulo modify_DB"""
     try:
@@ -15,7 +17,8 @@ def edit_usuarios():
         if not data:
             return jsonify({"success": False, "error": "Datos requeridos"}), 400
         
-        user_uuid = g.user.get('user_uuid')
+        # Obtener user_uuid desde g.user después de la autenticación
+        user_uuid = g.user.get('id')
         if not user_uuid:
             return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
         
@@ -56,6 +59,7 @@ def edit_usuarios():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @edit_bp.route('/api/edit/ubicaciones', methods=['POST'])
+@auth_manager.login_required
 def edit_ubicaciones():
     """Editar ubicaciones con conversión automática de Plus Code y debug exhaustivo"""
     try:
@@ -155,10 +159,11 @@ def edit_ubicaciones():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @edit_bp.route('/api/data/usuarios', methods=['GET'])
+@auth_manager.login_required
 def get_usuario_data():
     """Obtener datos del usuario autenticado para el formulario de edición"""
     try:
-        user_uuid = g.user.get('user_uuid')
+        user_uuid = g.user.get('id')
         if not user_uuid:
             return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
         
@@ -185,10 +190,11 @@ def get_usuario_data():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @edit_bp.route('/api/data/ubicaciones', methods=['GET'])
+@auth_manager.login_required
 def get_ubicaciones_data():
     """Obtener ubicaciones del usuario autenticado"""
     try:
-        user_uuid = g.user.get('user_uuid')
+        user_uuid = g.user.get('id')
         if not user_uuid:
             return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
         
@@ -205,10 +211,11 @@ def get_ubicaciones_data():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @edit_bp.route('/api/data/info_contacto', methods=['GET'])
+@auth_manager.login_required
 def get_info_contacto_data():
     """Obtener datos de info_contacto del usuario autenticado"""
     try:
-        user_uuid = g.user.get('user_uuid')
+        user_uuid = g.user.get('id')
         if not user_uuid:
             return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
         
@@ -225,6 +232,7 @@ def get_info_contacto_data():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @edit_bp.route('/api/edit/info_contacto', methods=['POST'])
+@auth_manager.login_required
 def edit_info_contacto():
     """Editar información de contacto del usuario usando el módulo modify_DB"""
     try:
@@ -232,7 +240,7 @@ def edit_info_contacto():
         if not data:
             return jsonify({"success": False, "error": "Datos requeridos"}), 400
         
-        user_uuid = g.user.get('user_uuid')
+        user_uuid = g.user.get('id')
         if not user_uuid:
             return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
         
