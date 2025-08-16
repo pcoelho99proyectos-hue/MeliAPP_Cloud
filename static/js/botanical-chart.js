@@ -55,9 +55,6 @@ class BotanicalChart {
 
         let html = `
             <div class="botanical-chart bg-white rounded-lg shadow-md p-4">
-                <h3 class="text-lg font-semibold text-gray-800 mb-3">
-                    Clases Botánicas - ${this.comuna}
-                </h3>
                 <div class="space-y-3">
         `;
 
@@ -105,13 +102,6 @@ class BotanicalChart {
                 </div>
             `;
         }
-
-        html += `
-                <div class="mt-4 text-xs text-gray-500">
-                    Total: ${this.data.length} clase${this.data.length !== 1 ? 's' : ''} botánica${this.data.length !== 1 ? 's' : ''}
-                </div>
-            </div>
-        `;
 
         console.log('🎯 Final HTML to be rendered:', html);
         this.container.innerHTML = html;
