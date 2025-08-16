@@ -42,14 +42,17 @@
                 </div>
             </div>
             
-            <!-- Right Column - Empty Container -->
-            <div class="w-full md:w-1/2 aspect-square bg-white bg-opacity-20 rounded-lg p-6 flex items-center justify-center">
-                <!-- Empty container for future content -->
-                <div class="text-center text-white opacity-70">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    <p>Contenido adicional</p>
+            <!-- Right Column - Botanical Chart -->
+            <div class="w-full md:w-1/2 aspect-square bg-white bg-opacity-20 rounded-lg p-6">
+                <div id="botanical-chart-container" 
+                     class="h-full"
+                     data-comuna="{{ contact_info.comuna if contact_info and contact_info.comuna else 'None' }}">
+                    <div class="flex items-center justify-center h-full">
+                        <div class="text-center">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400 mx-auto mb-2"></div>
+                            <p class="text-white opacity-70">Cargando gráfico botánico...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -421,6 +424,10 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             }
         }
     </script>
+    
+    <!-- Botanical Chart Integration -->
+    <script src="{{ url_for('static', filename='js/botanical-chart.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/profile-integration.js') }}"></script>
 {% endblock %}
 
 

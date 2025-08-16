@@ -67,12 +67,14 @@ def load_user():
 from routes import api_bp, web_bp
 from edit_user_data import edit_bp
 from debug_endpoint import debug_bp
+from botanical_chart import botanical_bp
 
 # Registrar blueprints
 app.register_blueprint(api_bp)
 app.register_blueprint(web_bp)
 app.register_blueprint(edit_bp)
 app.register_blueprint(debug_bp)
+app.register_blueprint(botanical_bp)
 
 def list_routes():
     """
@@ -154,76 +156,104 @@ def get_base_url():
         return f"http://127.0.0.1:{PORT}"
 
 def print_welcome_message():
-    """Muestra un mensaje de bienvenida completo con información de todos los endpoints."""
+    """Muestra un mensaje de bienvenida completo con la arquitectura actual del proyecto."""
     base_url = get_base_url()
     welcome_msg = f"""
-=== 🍯 MELI APP v3.0 - INFORMACIÓN COMPLETA ===
+=== 🍯 MELI APP v3.0 - ARQUITECTURA ACTUALIZADA ===
 
 📊 **ESTADO DEL SISTEMA:**
 ✅ Conexión con Supabase establecida
-✅ Todos los módulos cargados correctamente
-✅ Blueprints registrados: api_bp, web_bp
-✅ Autenticación con Supabase Auth activa
+✅ Módulos cargados: auth_manager, supabase_client, botanical_chart
+✅ Blueprints activos: api_bp, web_bp, edit_bp, debug_bp, botanical_bp
+✅ Autenticación: Google OAuth + Supabase Auth
+✅ Sistema de QR codes operativo
+✅ Clasificación botánica visual activa
 
-🌐 **ENDPOINTS DISPONIBLES:**
+🌐 **ARQUITECTURA ACTUALIZADA:**
 
-[🏠 RUTAS WEB - INTERFAZ DE USUARIO]
-/                            - Página principal (Home)
-/login                       - Formulario de inicio de sesión
-/register                    - Formulario de registro
-/profile/<user_id>           - Perfil de usuario público
-/edit-profile               - Editar perfil (requiere login)
-/search                     - Búsqueda de usuarios
-/buscar                     - Búsqueda avanzada
-/gestionar-lote             - Gestión de lotes de producción
-/auth-test                  - Página de prueba de autenticación
-/logout                     - Cerrar sesión
+[🏗️ STACK TECNOLÓGICO]
+- Backend: Flask 2.3.3 con Blueprints modulares
+- Base de datos: Supabase (PostgreSQL)
+- Frontend: HTML5 + Tailwind CSS + JavaScript vanilla
+- Autenticación: Supabase Auth + Google OAuth
+- QR: segno library para generación dinámica
+- Despliegue: Vercel-ready
 
-[🔧 RUTAS DEBUG]
-/debug/oauth               - Página de prueba OAuth
-/debug/info_contacto/<uuid:usuario_uuid> - Ver info de contacto
-/debug/test_update/<uuid:usuario_uuid>   - Prueba de actualización
+[📁 ESTRUCTURA DE ARCHIVOS]
+├── app.py                          # Aplicación principal
+├── auth_manager.py                 # Gestión centralizada de autenticación
+├── supabase_client.py             # Cliente singleton Supabase
+├── searcher.py                    # Búsqueda avanzada multi-tabla
+├── botanical_chart.py             # Sistema de clasificación botánica
+├── data_tables_supabase.py        # Operaciones de tablas
+├── routes.py                      # Endpoints API REST
+├── edit_user_data.py              # Edición de usuarios
+├── modify_DB.py                   # Modificaciones de BD
+├── gmaps_utils.py                 # Utilidades Google Maps
+├── debug_endpoint.py              # Endpoints de debug
+├── qr_code/                       # Módulo de generación QR
+├── static/                        # Archivos estáticos
+├── templates/                     # Plantillas modulares
+└── docs/                          # Documentación
 
-[📋 RUTAS API]
-/api/tables                - Listar todas las tablas
-/api/table/<table_name>    - Datos de tabla específica
-/api/test                  - Endpoint de prueba
-/api/test-db               - Prueba de conexión DB
-/api/usuario/<uuid>        - Datos de usuario
-/api/usuario/<uuid>/qr     - QR de usuario
-/api/user/current          - Usuario actual
+[🚀 ENDPOINTS DISPONIBLES:]
 
-[🔐 RUTAS AUTH API]
-/api/auth/login            - Login API
-/api/auth/register         - Registro API
-/api/auth/logout           - Logout API
-/api/auth/session          - Estado de sesión
-/api/auth/google           - Google OAuth
+[🏠 RUTAS WEB - INTERFAZ RESPONSIVE]
+/                            - Página principal con búsqueda
+/login                       - Login con Google OAuth
+/register                    - Registro de nuevos usuarios
+/profile/<uuid>              - Perfil público con QR
+/editar-perfil               - Edición de perfiles en tiempo real
+/gestionar-lote              - Gestión completa de lotes apícolas
+/botanical-chart/<comuna>    - Visualización botánica interactiva
 
-[📊 TABLAS DISPONIBLES EN API]
-- usuarios
-- info_contacto  
-- ubicaciones
-- produccion_apicola
-- origenes_botanicos
-- solicitudes_apicultor
+[🔍 API RESTFUL - ACCESO PROGRAMÁTICO]
+GET    /api/search            - Búsqueda general con autocompletado
+GET    /api/autocomplete      - Sugerencias de búsqueda
+GET    /api/table/<table>     - Datos de tabla específica
+POST   /api/editar-usuario    - Actualización de datos de usuario
+GET    /api/botanical-classes/<comuna> - Clases botánicas por comuna
 
 [🔐 SISTEMA DE AUTENTICACIÓN]
-- Login con Supabase Auth (email/contraseña)
-- Registro con validación de email
-- Integración con Google OAuth
-- Mapeo auth_user_id ↔ usuarios.uuid
-- Gestión de sesiones con Flask
+/auth/login                  - Inicio de sesión con Google OAuth
+/auth/callback               - Callback de autenticación
+/auth/logout                 - Cierre de sesión seguro
 
-[⚙️ CONFIGURACIÓN]
+[📊 TABLAS DE BASE DE DATOS]
+- usuarios (perfiles de usuario)
+- info_contacto (datos de contacto)
+- ubicaciones (geolocalización)
+- produccion_apicola (datos de producción)
+- origenes_botanicos (clases botánicas)
+- solicitudes_apicultor (gestión de solicitudes)
+
+[⚙️ CONFIGURACIÓN ACTUAL]
 - Puerto: {PORT}
 - Debug: {DEBUG}
-- Base de datos: Supabase PostgreSQL
-- Framework: Flask con Blueprints
-- Autenticación: Supabase Auth
+- Framework: Flask con arquitectura modular
+- Autenticación: Supabase Auth + Google OAuth
+- Responsive: Mobile-first con Tailwind CSS
+- QR Codes: Generación dinámica con segno
+- Despliegue: Vercel-ready con configuración optimizada
 
-🚀 **SERVIDOR INICIADO**
+[🔧 VARIABLES DE ENTORNO]
+- SUPABASE_URL, SUPABASE_KEY
+- GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+- SECRET_KEY (Flask sessions)
+- FLASK_ENV, FLASK_DEBUG (opcional)
+
+🚀 **SERVIDOR INICIADO EXITOSAMENTE**
 Accede a: {base_url}
+
+📱 **Características destacadas:**
+- ✅ Interfaz responsive mobile-first
+- ✅ Búsqueda inteligente con autocompletado
+- ✅ Perfiles públicos con QR codes
+- ✅ Sistema de clasificación botánica visual
+- ✅ Edición de perfiles en tiempo real
+- ✅ Gestión completa de lotes apícolas
+- ✅ API RESTful completa
+- ✅ Autenticación segura con Google OAuth
 """
     print(welcome_msg)
 

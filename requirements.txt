@@ -1,5 +1,7 @@
 Flask
 python-dotenv
+pandas
+chardet
 supabase
 segno
 requests
