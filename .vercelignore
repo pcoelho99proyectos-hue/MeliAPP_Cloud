@@ -31,9 +31,10 @@ Thumbs.db
 .git/
 .gitignore
 
-# Documentation
-docs/
-README.md
+# Documentation - allow clases.csv but exclude other docs
+docs/*.md
+docs/README.md
+docs/OBJ_*.md
 
 # Test files
 test/

@@ -8,8 +8,26 @@ botanical_bp = Blueprint('botanical', __name__)
 @lru_cache(maxsize=128)
 def read_botanical_classes():
     """Lee el archivo CSV y retorna un diccionario con clases por comuna"""
-    csv_path = os.path.join(os.path.dirname(__file__), 'docs', 'clases.csv')
+    # Intentar múltiples rutas para compatibilidad con Vercel
+    possible_paths = [
+        os.path.join(os.path.dirname(__file__), 'docs', 'clases.csv'),
+        os.path.join(os.getcwd(), 'docs', 'clases.csv'),
+        '/app/docs/clases.csv',  # Ruta típica en Vercel
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'docs', 'clases.csv')
+    ]
+    
     classes_by_commune = {}
+    csv_path = None
+    
+    # Buscar el archivo en las rutas posibles
+    for path in possible_paths:
+        if os.path.exists(path):
+            csv_path = path
+            break
+    
+    if not csv_path:
+        print("❌ Archivo clases.csv no encontrado en ninguna ruta")
+        return {}
     
     try:
         # Usar latin-1 para manejar caracteres españoles
@@ -29,8 +47,11 @@ def read_botanical_classes():
                     if especie not in classes_by_commune[comuna][clase]:
                         classes_by_commune[comuna][clase].append(especie)
                         
+        print(f"✅ CSV cargado exitosamente desde: {csv_path}")
+        print(f"📊 Total de comunas: {len(classes_by_commune)}")
+                        
     except Exception as e:
-        print(f"❌ Error leyendo CSV: {e}")
+        print(f"❌ Error leyendo CSV desde {csv_path}: {e}")
         return {}
         
     return classes_by_commune
