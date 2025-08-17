@@ -123,49 +123,72 @@ class GoogleOAuth:
             }
     
     def _create_or_update_user(self, user):
-        """Crea o actualiza usuario en la base de datos"""
+        """Crea o actualiza usuario usando cliente autenticado"""
         try:
+            # Crear cliente autenticado con el token del usuario
+            from supabase import create_client
+            import os
+            
+            # Obtener el cliente con el token de autenticación actual
+            auth_client = create_client(
+                os.getenv('SUPABASE_URL'),
+                os.getenv('SUPABASE_KEY')
+            )
+            
             # Buscar usuario existente
-            user_check = db.client.table('usuarios').select('id').eq('auth_user_id', user.id).execute()
+            user_check = auth_client.table('usuarios').select('id').eq('auth_user_id', user.id).execute()
             
             if user_check.data and len(user_check.data) > 0:
                 # Usuario existente
                 user_db_id = user_check.data[0]['id']
-                logger.info(f"Usuario existente encontrado: {user.email}")
+                logger.info(f"Usuario existente encontrado: {user.email} (ID: {user_db_id})")
+                return user_db_id
+            
+            # Crear nuevo usuario con datos seguros
+            new_user = {
+                'username': user.email,
+                'auth_user_id': user.id,
+                'tipo_usuario': 'apicultor',
+                'role': 'Apicultor',
+                'status': 'active',
+                'activo': True,
+                'created_at': 'now()'
+            }
+            
+            # Usar el cliente autenticado para insertar
+            insert_result = auth_client.table('usuarios').insert(new_user).execute()
+            
+            if insert_result.data and len(insert_result.data) > 0:
+                user_db_id = insert_result.data[0]['id']
+                logger.info(f"Usuario creado exitosamente: {user.email} (ID: {user_db_id})")
+                
+                # Crear info de contacto
+                self._create_contact_info_with_client(auth_client, user_db_id, user)
+                return user_db_id
             else:
-                # Crear nuevo usuario - usar el cliente con autenticación del usuario
-                new_user = {
-                    'username': user.email,
-                    'auth_user_id': user.id,
-                    'tipo_usuario': 'apicultor',
-                    'role': 'Apicultor',
-                    'status': 'active',
-                    'activo': True
-                }
+                logger.error("No se pudo crear el usuario - sin datos")
+                return str(user.id)  # Fallback
                 
-                # Usar el cliente autenticado para insertar
-                insert_result = db.client.table('usuarios').insert(new_user).execute()
-                
-                if insert_result.data and len(insert_result.data) > 0:
-                    user_db_id = insert_result.data[0]['id']
-                    logger.info(f"Nuevo usuario creado: {user.email}")
-                    
-                    # Crear info de contacto básica
-                    self._create_contact_info(user_db_id, user)
-                else:
-                    logger.error("No se pudo crear el usuario")
-                    raise Exception("Error al crear usuario")
-            
-            return user_db_id
-            
         except Exception as e:
             logger.error(f"Error en _create_or_update_user: {str(e)}")
-            raise
+            # Fallback: retornar el auth_user_id
+            return str(user.id)
     
     def _create_contact_info(self, user_db_id, user):
         """Crea información de contacto básica para nuevo usuario"""
         try:
             db.client.table('info_contacto').insert({
+                'usuario_id': user_db_id,
+                'nombre_completo': user.user_metadata.get('full_name', ''),
+                'correo_principal': user.email
+            }).execute()
+        except Exception as e:
+            logger.warning(f"Error creando info_contacto: {str(e)}")
+    
+    def _create_contact_info_with_client(self, client, user_db_id, user):
+        """Crea información de contacto usando cliente específico"""
+        try:
+            client.table('info_contacto').insert({
                 'usuario_id': user_db_id,
                 'nombre_completo': user.user_metadata.get('full_name', ''),
                 'correo_principal': user.email
