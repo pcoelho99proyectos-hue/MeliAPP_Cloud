@@ -21,7 +21,8 @@ class DatabaseModifier:
     def get_auth_user_id(self, auth_client, user_uuid):
         """Obtener el auth_user_id correspondiente al user_uuid"""
         try:
-            user_info = auth_client.table('usuarios').select('auth_user_id').eq('id', user_uuid).single().execute()
+            # En el nuevo schema, user_uuid ES el auth_user_id
+            user_info = auth_client.table('usuarios').select('auth_user_id').eq('auth_user_id', user_uuid).single().execute()
             return user_info.data['auth_user_id'] if user_info.data else None
         except Exception as e:
             logger.error(f"Error obteniendo auth_user_id: {e}")
@@ -50,7 +51,15 @@ class DatabaseModifier:
     def check_unique_field(self, auth_client, table, field, value, exclude_auth_user_id=None):
         """Verificar si un valor es único en un campo específico"""
         try:
-            query = auth_client.table(table).select('id').eq(field, value)
+            # Select appropriate primary key field based on table
+            if table == 'usuarios':
+                pk_field = 'auth_user_id'
+            elif table == 'info_contacto':
+                pk_field = 'id'
+            else:
+                pk_field = 'id'
+                
+            query = auth_client.table(table).select(pk_field).eq(field, value)
             if exclude_auth_user_id:
                 query = query.neq('auth_user_id', exclude_auth_user_id)
             
@@ -87,7 +96,12 @@ class DatabaseModifier:
                 current_record = {}
                 
                 # Obtener el registro actual
-                ref_field = 'id' if table == 'usuarios' else 'usuario_id'
+                if table == 'usuarios':
+                    ref_field = 'auth_user_id'
+                elif table == 'info_contacto':
+                    ref_field = 'auth_user_id'
+                else:
+                    ref_field = 'auth_user_id'
                 current_data = auth_client.table(table).select('*').eq(ref_field, user_uuid).execute()
                 if current_data.data:
                     current_record = current_data.data[0]
@@ -131,19 +145,16 @@ class DatabaseModifier:
                 update_data = data
             
             # Determinar campo de referencia según la tabla
+            # En el nuevo schema, todas las tablas usan auth_user_id como referencia
             if table == 'usuarios':
-                ref_field = 'id'
+                ref_field = 'auth_user_id'
                 ref_value = user_uuid
             elif table == 'info_contacto':
-                # CRÍTICO: Buscar el usuario_id correcto basado en auth_user_id
-                user_mapping = auth_client.table('usuarios').select('id').eq('auth_user_id', auth_user_id).single().execute()
-                if user_mapping.data:
-                    ref_field = 'usuario_id'
-                    ref_value = user_mapping.data['id']  # Usar el ID real del usuario
-                else:
-                    return {"success": False, "error": "Usuario no encontrado en la tabla usuarios"}, 404
+                ref_field = 'auth_user_id'
+                ref_value = user_uuid
             else:
-                ref_field = 'usuario_id'
+                # Todas las demás tablas (ubicaciones, origenes_botanicos, solicitudes_apicultor)
+                ref_field = 'auth_user_id'
                 ref_value = user_uuid
             
             logger.info(f"Actualizando {table} para usuario {user_uuid} (auth_user_id: {auth_user_id})")
@@ -158,10 +169,10 @@ class DatabaseModifier:
                 
                 if table == 'info_contacto':
                     # PASO CRÍTICO: Verificar que el usuario autenticado es el dueño
-                    logger.info(f"Verificando ownership: auth_user_id={auth_user_id} vs usuario_id={user_uuid}")
+                    logger.info(f"Verificando ownership: auth_user_id={auth_user_id} vs user_uuid={user_uuid}")
                     
-                    # Obtener el registro actual
-                    ref_field = 'id' if table == 'usuarios' else 'usuario_id'
+                    # Obtener el registro actual usando auth_user_id
+                    ref_field = 'auth_user_id'
                     current_data = auth_client.table(table).select('*').eq(ref_field, user_uuid).execute()
                     logger.info(f"Datos actuales: {json.dumps(current_data.data, ensure_ascii=False)}")
                     
@@ -196,7 +207,7 @@ class DatabaseModifier:
                     if not current_data.data or len(current_data.data) == 0:
                         logger.warning("Registro NO existe - CREANDO")
                         create_data = {
-                            'usuario_id': user_uuid,
+                            'auth_user_id': user_uuid,
                             'nombre_completo': update_data.get('nombre_completo', ''),
                             'correo_principal': update_data.get('correo_principal', ''),
                             'telefono_principal': update_data.get('telefono_principal', '')
@@ -211,12 +222,9 @@ class DatabaseModifier:
                     else:
                         logger.info("Registro EXISTE - ACTUALIZANDO")
                         
-                        # CRÍTICO: Verificar ownership via tabla usuarios
-                        # Buscar el auth_user_id asociado al usuario_id en info_contacto
-                        user_check = auth_client.table('usuarios').select('auth_user_id').eq('id', user_uuid).single().execute()
-                        
-                        if not user_check.data or str(user_check.data['auth_user_id']) != str(auth_user_id):
-                            logger.error(f"❌ NO AUTORIZADO: auth_user_id={auth_user_id} no coincide con owner del registro")
+                        # CRÍTICO: Verificar ownership - en el nuevo schema user_uuid ES auth_user_id
+                        if str(user_uuid) != str(auth_user_id):
+                            logger.error(f"❌ NO AUTORIZADO: user_uuid={user_uuid} no coincide con auth_user_id={auth_user_id}")
                             return {"success": False, "error": "Usuario no autorizado para modificar este registro"}, 403
                         
                         # Ejecutar update con usuario autenticado
@@ -245,7 +253,7 @@ class DatabaseModifier:
                             # Intentar con upsert como fallback
                             upsert_result = auth_client.table(table).upsert({
                                 **update_data,
-                                'usuario_id': user_uuid
+                                'auth_user_id': user_uuid
                             }).execute()
                             logger.info(f"UPSERT RESULTADO: {json.dumps(upsert_result.data, ensure_ascii=False)}")
                 
