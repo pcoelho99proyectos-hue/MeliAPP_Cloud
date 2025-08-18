@@ -46,46 +46,45 @@ class Searcher:
         clean_uuid = uuid_str.split('-')[0].lower()
         return clean_uuid[:8] if clean_uuid else ''
 
-    def get_user_data(self, user_id: str) -> tuple[dict, dict, list, list, list, list, str]:
+    def get_user_data(self, auth_user_id: str) -> tuple[dict, dict, list, list, list, list, str]:
         """
         Obtiene los datos de un usuario, su información de contacto, ubicaciones, 
-        producciones apícolas, orígenes botánicos y solicitudes por ID.
+        producciones apícolas, orígenes botánicos y solicitudes por auth_user_id.
         
         Args:
-            user_id: ID del usuario a buscar
+            auth_user_id: auth_user_id del usuario a buscar
             
         Returns:
             tuple: (user_data, contact_data, locations, producciones, origenes_botanicos, solicitudes, error_message)
         """
-        if not user_id:
-            return None, None, [], [], [], [], "Se requiere un ID de usuario"
+        if not auth_user_id:
+            return None, None, [], [], [], [], "Se requiere un auth_user_id de usuario"
             
         try:
             # Obtener datos del usuario
-            user_response = self.supabase.table('usuarios').select('*').eq('id', user_id).execute()
+            user_response = self.supabase.table('usuarios').select('*').eq('auth_user_id', auth_user_id).execute()
             user = user_response.data[0] if user_response.data else None
             
             if not user:
                 return None, None, [], [], [], [], "Usuario no encontrado"
             
             # Obtener información de contacto
-            contact_response = self.supabase.table('info_contacto').select('*').eq('usuario_id', user_id).execute()
+            contact_response = self.supabase.table('info_contacto').select('*').eq('auth_user_id', auth_user_id).execute()
             contact = contact_response.data[0] if contact_response.data else {}
             
             # Obtener ubicaciones
-            locations_response = self.supabase.table('ubicaciones').select('*').eq('usuario_id', user_id).execute()
+            locations_response = self.supabase.table('ubicaciones').select('*').eq('auth_user_id', auth_user_id).execute()
             locations = locations_response.data if locations_response.data else []
             
-            # Obtener producciones apícolas
-            producciones_response = self.supabase.table('produccion_apicola').select('*').eq('usuario_id', user_id).execute()
+            # Obtener orígenes botánicos (producciones apícolas)
+            producciones_response = self.supabase.table('origenes_botanicos').select('*').eq('auth_user_id', auth_user_id).execute()
             producciones = producciones_response.data if producciones_response.data else []
             
             # Obtener orígenes botánicos
-            origenes_response = self.supabase.table('origenes_botanicos').select('*').eq('usuario_id', user_id).execute()
-            origenes_botanicos = origenes_response.data if origenes_response.data else []
+            origenes_botanicos = producciones  # Misma tabla según nuevo esquema
             
             # Obtener solicitudes
-            solicitudes_response = self.supabase.table('solicitudes_apicultor').select('*').eq('usuario_id', user_id).execute()
+            solicitudes_response = self.supabase.table('solicitudes_apicultor').select('*').eq('auth_user_id', auth_user_id).execute()
             solicitudes = solicitudes_response.data if solicitudes_response.data else []
             
             return user, contact, locations, producciones, origenes_botanicos, solicitudes, ""
@@ -97,18 +96,18 @@ class Searcher:
     
     def get_user_id_by_auth_id(self, auth_user_id: str) -> Optional[str]:
         """
-        Obtiene el ID del usuario en la tabla 'usuarios' a partir del ID de autenticación.
+        Obtiene el auth_user_id del usuario (que ahora es la PRIMARY KEY).
         
         Args:
             auth_user_id: ID del usuario desde la autenticación (Supabase Auth)
             
         Returns:
-            str: ID del usuario en la tabla 'usuarios' o None si no se encuentra
+            str: auth_user_id si el usuario existe o None si no se encuentra
         """
         try:
-            response = self.supabase.table('usuarios').select('id').eq('auth_user_id', auth_user_id).maybe_single().execute()
+            response = self.supabase.table('usuarios').select('auth_user_id').eq('auth_user_id', auth_user_id).maybe_single().execute()
             if hasattr(response, 'data') and response.data:
-                return response.data['id']
+                return response.data['auth_user_id']
         except Exception as e:
             print(f"Error al buscar usuario por auth_user_id {auth_user_id}: {str(e)}")
         return None
@@ -183,24 +182,33 @@ class Searcher:
             # Construir consulta OR para buscar en múltiples campos
             query = self.supabase.table(table).select('*')
             
-            # Añadir condiciones OR para cada campo
-            or_conditions = []
+            # Buscar en cada campo individualmente y combinar resultados
+            results = []
             for field in fields:
-                or_conditions.append(f"{field}.ilike.%{term}%")
+                try:
+                    field_query = self.supabase.table(table).select('*').ilike(field, f'%{term}%').limit(limit)
+                    field_response = field_query.execute()
+                    if hasattr(field_response, 'data') and field_response.data:
+                        results.extend(field_response.data)
+                except Exception as e:
+                    print(f"Error buscando en campo {field}: {str(e)}")
+                    continue
             
-            if or_conditions:
-                query = query.or_(', '.join(or_conditions))
-                
-            # Aplicar límite y ejecutar consulta
-            response = query.limit(limit).execute()
+            # Eliminar duplicados basado en ID
+            seen_ids = set()
+            unique_results = []
+            for item in results:
+                item_id = item.get('auth_user_id') or item.get('id')
+                if item_id and item_id not in seen_ids:
+                    unique_results.append(item)
+                    seen_ids.add(item_id)
             
-            if hasattr(response, 'data') and response.data:
-                return response.data
+            return unique_results[:limit]
                 
         except Exception as e:
             print(f"Error al buscar en la tabla {table}: {str(e)}")
             
-        return results
+        return []
 
     async def search_in_all_tables(self, term: str, limit_per_table: int = 5) -> List[Dict[str, Any]]:
         """
@@ -230,41 +238,41 @@ class Searcher:
             
         return results
 
-    async def find_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+    async def find_user_by_id(self, auth_user_id: str) -> Optional[Dict[str, Any]]:
         """
-        Busca un usuario por su ID en la tabla de usuarios.
+        Busca un usuario por su auth_user_id en la tabla de usuarios.
         
         Args:
-            user_id: ID del usuario a buscar
+            auth_user_id: auth_user_id del usuario a buscar
             
         Returns:
             Diccionario con los datos del usuario o None si no se encuentra
         """
         try:
-            response = self.supabase.table('usuarios').select('*').eq('id', user_id).execute()
+            response = self.supabase.table('usuarios').select('*').eq('auth_user_id', auth_user_id).execute()
             if hasattr(response, 'data') and response.data:
                 return response.data[0]
         except Exception as e:
-            print(f"Error al buscar usuario por ID {user_id}: {str(e)}")
+            print(f"Error al buscar usuario por auth_user_id {auth_user_id}: {str(e)}")
             
         return None
 
-    async def find_contact_by_user_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+    async def find_contact_by_user_id(self, auth_user_id: str) -> Optional[Dict[str, Any]]:
         """
-        Busca la información de contacto de un usuario por su ID.
+        Busca la información de contacto de un usuario por su auth_user_id.
         
         Args:
-            user_id: ID del usuario
+            auth_user_id: auth_user_id del usuario
             
         Returns:
             Diccionario con la información de contacto o None si no se encuentra
         """
         try:
-            response = self.supabase.table('info_contacto').select('*').eq('usuario_id', user_id).execute()
+            response = self.supabase.table('info_contacto').select('*').eq('auth_user_id', auth_user_id).execute()
             if hasattr(response, 'data') and response.data:
                 return response.data[0]
         except Exception as e:
-            print(f"Error al buscar contacto para usuario {user_id}: {str(e)}")
+            print(f"Error al buscar contacto para usuario {auth_user_id}: {str(e)}")
             
         return None
 
@@ -463,15 +471,10 @@ class Searcher:
             if username_response.data:
                 return username_response.data[0]
                 
-            # Buscar por UUID exacto - primero intentar como auth_user_id
+            # Buscar por UUID exacto - buscar por auth_user_id
             if len(user_identifier) == 36 and user_identifier.count('-') == 4:
-                # Buscar por auth_user_id (UUID de auth.users)
+                # Buscar por auth_user_id (PRIMARY KEY)
                 user_response = self.supabase.table('usuarios').select('*').eq('auth_user_id', user_identifier).execute()
-                if user_response.data:
-                    return user_response.data[0]
-                
-                # También buscar por id (UUID de la tabla usuarios)
-                user_response = self.supabase.table('usuarios').select('*').eq('id', user_identifier).execute()
                 if user_response.data:
                     return user_response.data[0]
                     
@@ -482,12 +485,10 @@ class Searcher:
                 if segment_response.data:
                     return segment_response.data[0]
                     
-            # Buscar por nombre o apellido
-            name_response = self.supabase.table('usuarios').select('*').or_(
-                f"nombre.ilike.%{user_identifier}%,apellido.ilike.%{user_identifier}%"
-            ).execute()
-            if name_response.data:
-                return name_response.data[0]
+            # Buscar por username (ya no hay nombre/apellido en la nueva estructura)
+            username_search = self.supabase.table('usuarios').select('*').ilike('username', f'%{user_identifier}%').execute()
+            if username_search.data:
+                return username_search.data[0]
                 
         except Exception as e:
             logger.error(f"Error en find_user_by_identifier: {str(e)}")
@@ -528,21 +529,21 @@ class Searcher:
         
         return users[:limit]
     
-    def get_user_profile_data(self, user_uuid: str) -> Optional[Dict]:
+    def get_user_profile_data(self, auth_user_id: str) -> Optional[Dict]:
         """
         Obtener datos completos del perfil de usuario incluyendo información relacionada.
         
         Args:
-            user_uuid: UUID del usuario
+            auth_user_id: auth_user_id del usuario
             
         Returns:
             dict: Datos completos del usuario o None
         """
         try:
-            # Obtener datos del usuario (solo columnas existentes según estructura real)
+            # Obtener datos del usuario
             user_response = self.supabase.table('usuarios').select(
-                'id,username,tipo_usuario,role,status,activo,fecha_registro'
-            ).eq('id', user_uuid).execute()
+                'auth_user_id,username,tipo_usuario,role,status,activo,fecha_registro'
+            ).eq('auth_user_id', auth_user_id).execute()
             user = user_response.data[0] if user_response.data else None
             
             if not user:
@@ -550,26 +551,25 @@ class Searcher:
             
             # Obtener información de contacto
             contact_response = self.supabase.table('info_contacto').select(
-                'id,usuario_id,nombre_completo,nombre_empresa,correo_principal,telefono_principal,direccion,comuna,region'
-            ).eq('usuario_id', user_uuid).execute()
+                'id,auth_user_id,nombre_completo,nombre_empresa,correo_principal,telefono_principal,direccion,comuna,region'
+            ).eq('auth_user_id', auth_user_id).execute()
             contact = contact_response.data[0] if contact_response.data else {}
             
             # Obtener ubicaciones (Oficinas apícolas)
             locations_response = self.supabase.table('ubicaciones').select(
-                'id,usuario_id,nombre,latitud,longitud,norma_geo,descripcion'
-            ).eq('usuario_id', user_uuid).execute()
+                'id,auth_user_id,nombre,latitud,longitud,norma_geo,descripcion'
+            ).eq('auth_user_id', auth_user_id).execute()
             locations = locations_response.data if locations_response.data else []
             
-            # Obtener producciones apícolas
-            producciones_response = self.supabase.table('produccion_apicola').select('*').eq('usuario_id', user_uuid).execute()
+            # Obtener orígenes botánicos (producciones apícolas)
+            producciones_response = self.supabase.table('origenes_botanicos').select('*').eq('auth_user_id', auth_user_id).execute()
             producciones = producciones_response.data if producciones_response.data else []
             
             # Obtener orígenes botánicos
-            origenes_response = self.supabase.table('origenes_botanicos').select('*').eq('usuario_id', user_uuid).execute()
-            origenes_botanicos = origenes_response.data if origenes_response.data else []
+            origenes_botanicos = producciones  # Misma tabla según nuevo esquema
             
             # Obtener solicitudes
-            solicitudes_response = self.supabase.table('solicitudes_apicultor').select('*').eq('usuario_id', user_uuid).execute()
+            solicitudes_response = self.supabase.table('solicitudes_apicultor').select('*').eq('auth_user_id', auth_user_id).execute()
             solicitudes = solicitudes_response.data if solicitudes_response.data else []
             
             return {

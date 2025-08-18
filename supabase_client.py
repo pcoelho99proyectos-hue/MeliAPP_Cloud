@@ -23,19 +23,30 @@ class SupabaseClient:
         # Si no existe el archivo, continuar (para producción en Vercel)
         load_dotenv(".env")
         
-        # Obtener variables de entorno (desde .env o desde el sistema)
-        self.url = os.getenv("SUPABASE_URL")
-        self.key = os.getenv("SUPABASE_KEY")
-        
-        if not self.url or not self.key:
-            raise ValueError("Variables SUPABASE_URL y/o SUPABASE_KEY no definidas. Configúralas en Vercel dashboard o en archivo .env")
-        
         try:
+            self.url = os.getenv('SUPABASE_URL')
+            self.key = os.getenv('SUPABASE_KEY')
+            
+            print(f"[DEBUG SUPABASE] URL configurada: {bool(self.url)}")
+            print(f"[DEBUG SUPABASE] KEY configurada: {bool(self.key)}")
+            
+            if not self.url or not self.key:
+                raise ValueError("SUPABASE_URL y SUPABASE_KEY deben estar configurados")
+            
+            print(f"[DEBUG SUPABASE] Creando cliente con URL: {self.url[:30]}...")
             self.client = create_client(self.url, self.key)
-            # Verificar que la conexión se estableció correctamente
-            if not hasattr(self.client, 'table'):
-                raise ValueError("No se pudo inicializar el cliente de Supabase")
+            
+            # Test de conexión
+            try:
+                test_response = self.client.table('usuarios').select('auth_user_id').limit(1).execute()
+                print(f"[DEBUG SUPABASE] Test de conexión exitoso. Registros disponibles: {len(test_response.data) if test_response.data else 0}")
+            except Exception as test_error:
+                print(f"[DEBUG SUPABASE] WARNING - Test de conexión falló: {test_error}")
+            
+            print("✅ Cliente Supabase inicializado correctamente")
+            
         except Exception as e:
+            print(f"❌ Error inicializando cliente Supabase: {e}")
             raise ValueError(f"Error al conectar con Supabase: {str(e)}")
     
     def test_connection(self):
@@ -62,23 +73,23 @@ class SupabaseClient:
         # Si llegamos aquí, la conexión es exitosa
         return True, f"Conexion exitosa a Supabase"
     
-    def get_usuario(self, user_id: str):
-        """Obtiene un usuario por su ID."""
-        return self.client.table('usuarios').select('*').eq('id', user_id).maybe_single().execute()
+    def get_usuario(self, auth_user_id: str):
+        """Obtiene un usuario por su auth_user_id (PRIMARY KEY)."""
+        return self.client.table('usuarios').select('*').eq('auth_user_id', auth_user_id).maybe_single().execute()
     
-    def get_contacto(self, user_id: str):
+    def get_contacto(self, auth_user_id: str):
         """Obtiene la información de contacto de un usuario."""
-        return self.client.table('info_contacto').select('*').eq('usuario_id', user_id).maybe_single().execute()
+        return self.client.table('info_contacto').select('*').eq('auth_user_id', auth_user_id).maybe_single().execute()
     
-    def get_ubicaciones(self, user_id: str):
+    def get_ubicaciones(self, auth_user_id: str):
         """Obtiene las ubicaciones de un usuario."""
-        return self.client.table('ubicaciones').select('*').eq('usuario_id', user_id).execute()
+        return self.client.table('ubicaciones').select('*').eq('auth_user_id', auth_user_id).execute()
     
-    def get_producciones_apicolas(self, user_id: str):
+    def get_producciones_apicolas(self, auth_user_id: str):
         """Obtiene las producciones apícolas de un usuario."""
-        return self.client.table('produccion_apicola')\
+        return self.client.table('origenes_botanicos')\
             .select('*')\
-            .eq('usuario_id', user_id)\
+            .eq('auth_user_id', auth_user_id)\
             .order('temporada', desc=True)\
             .execute()
     
@@ -91,11 +102,11 @@ class SupabaseClient:
             .in_('produccion_id', produccion_ids)\
             .execute()
     
-    def get_solicitudes_apicultor(self, user_id: str):
+    def get_solicitudes_apicultor(self, auth_user_id: str):
         """Obtiene las solicitudes de apicultor de un usuario."""
         return self.client.table('solicitudes_apicultor')\
             .select('*')\
-            .eq('usuario_id', user_id)\
+            .eq('auth_user_id', auth_user_id)\
             .order('created_at', desc=True)\
             .execute()
     

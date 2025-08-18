@@ -67,7 +67,7 @@ class DatabaseModifier:
         Args:
             table: Nombre de la tabla
             data: Diccionario con los datos a actualizar
-            user_uuid: UUID del usuario (usuarios.id)
+            user_uuid: UUID del usuario (auth_user_id)
             field_mappings: Mapeo de campos permitidos y sus validaciones
             validation_rules: Reglas de validación específicas por campo
         """

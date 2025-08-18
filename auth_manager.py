@@ -135,14 +135,14 @@ class GoogleOAuth:
                 os.getenv('SUPABASE_KEY')
             )
             
-            # Buscar usuario existente
-            user_check = auth_client.table('usuarios').select('id').eq('auth_user_id', user.id).execute()
+            # Buscar usuario existente por auth_user_id (PRIMARY KEY)
+            user_check = auth_client.table('usuarios').select('auth_user_id').eq('auth_user_id', user.id).execute()
             
             if user_check.data and len(user_check.data) > 0:
                 # Usuario existente
-                user_db_id = user_check.data[0]['id']
-                logger.info(f"Usuario existente encontrado: {user.email} (ID: {user_db_id})")
-                return user_db_id
+                auth_user_id = user_check.data[0]['auth_user_id']
+                logger.info(f"Usuario existente encontrado: {user.email} (auth_user_id: {auth_user_id})")
+                return auth_user_id
             
             # Crear nuevo usuario con datos seguros
             new_user = {
@@ -151,20 +151,19 @@ class GoogleOAuth:
                 'tipo_usuario': 'apicultor',
                 'role': 'Apicultor',
                 'status': 'active',
-                'activo': True,
-                'created_at': 'now()'
+                'activo': True
             }
             
             # Usar el cliente autenticado para insertar
             insert_result = auth_client.table('usuarios').insert(new_user).execute()
             
             if insert_result.data and len(insert_result.data) > 0:
-                user_db_id = insert_result.data[0]['id']
-                logger.info(f"Usuario creado exitosamente: {user.email} (ID: {user_db_id})")
+                auth_user_id = insert_result.data[0]['auth_user_id']
+                logger.info(f"Usuario creado exitosamente: {user.email} (auth_user_id: {auth_user_id})")
                 
                 # Crear info de contacto
-                self._create_contact_info_with_client(auth_client, user_db_id, user)
-                return user_db_id
+                self._create_contact_info_with_client(auth_client, auth_user_id, user)
+                return auth_user_id
             else:
                 logger.error("No se pudo crear el usuario - sin datos")
                 return str(user.id)  # Fallback
@@ -174,31 +173,31 @@ class GoogleOAuth:
             # Fallback: retornar el auth_user_id
             return str(user.id)
     
-    def _create_contact_info(self, user_db_id, user):
+    def _create_contact_info(self, auth_user_id, user):
         """Crea información de contacto básica para nuevo usuario"""
         try:
             db.client.table('info_contacto').insert({
-                'usuario_id': user_db_id,
+                'auth_user_id': auth_user_id,
                 'nombre_completo': user.user_metadata.get('full_name', ''),
                 'correo_principal': user.email
             }).execute()
         except Exception as e:
             logger.warning(f"Error creando info_contacto: {str(e)}")
     
-    def _create_contact_info_with_client(self, client, user_db_id, user):
+    def _create_contact_info_with_client(self, client, auth_user_id, user):
         """Crea información de contacto usando cliente específico"""
         try:
             client.table('info_contacto').insert({
-                'usuario_id': user_db_id,
+                'auth_user_id': auth_user_id,
                 'nombre_completo': user.user_metadata.get('full_name', ''),
                 'correo_principal': user.email
             }).execute()
         except Exception as e:
             logger.warning(f"Error creando info_contacto: {str(e)}")
     
-    def _create_session(self, user, user_db_id, session_data):
+    def _create_session(self, user, auth_user_id, session_data):
         """Crea la sesión de usuario"""
-        session['user_id'] = user_db_id
+        session['user_id'] = auth_user_id  # Ahora user_id es el auth_user_id
         session['auth_user_id'] = str(user.id)
         session['user_email'] = user.email
         session['user_name'] = user.user_metadata.get('full_name', user.email)
@@ -242,7 +241,7 @@ class AuthManager:
             auth_client.postgrest.auth(token)
             
             # Verificar que funciona
-            auth_client.table('usuarios').select('id').limit(1).execute()
+            auth_client.table('usuarios').select('auth_user_id').limit(1).execute()
             
             cls._authenticated_client = auth_client
             return auth_client
@@ -362,20 +361,20 @@ class AuthManager:
             # Obtener información adicional del usuario desde info_contacto
             contact_response = db.client.table('info_contacto')\
                 .select('id, nombre_completo, nombre_empresa')\
-                .eq('usuario_id', user.id)\
+                .eq('auth_user_id', user.id)\
                 .execute()
             
             contact_info = contact_response.data[0] if contact_response.data else {}
             
-            # Buscar el ID de la tabla usuarios correspondiente al auth_user_id
+            # Buscar el usuario en la tabla usuarios por auth_user_id (PRIMARY KEY)
             user_mapping = db.client.table('usuarios')\
-                .select('id')\
+                .select('auth_user_id')\
                 .eq('auth_user_id', user.id)\
                 .limit(1)\
                 .execute()
             
             if user_mapping.data and len(user_mapping.data) > 0:
-                user_uuid = user_mapping.data[0]['id']
+                auth_user_id = user_mapping.data[0]['auth_user_id']
             else:
                 # Si no existe en usuarios, crear uno nuevo
                 new_user = {
@@ -388,22 +387,22 @@ class AuthManager:
                 }
                 insert_result = db.client.table('usuarios').insert(new_user).execute()
                 if insert_result.data:
-                    user_uuid = insert_result.data[0]['id']
+                    auth_user_id = insert_result.data[0]['auth_user_id']
                     
                     # Crear info de contacto básica
                     try:
                         db.client.table('info_contacto').insert({
-                            'usuario_id': user_uuid,
+                            'auth_user_id': auth_user_id,
                             'nombre_completo': user.user_metadata.get('full_name', ''),
                             'correo_principal': user.email
                         }).execute()
                     except Exception as e:
                         logger.warning(f"Error creando info_contacto: {str(e)}")
                 else:
-                    user_uuid = str(user.id)
+                    auth_user_id = str(user.id)
             
             # Crear sesión de usuario
-            session['user_id'] = user_uuid  # ID de la tabla usuarios
+            session['user_id'] = auth_user_id  # auth_user_id es ahora la PRIMARY KEY
             session['auth_user_id'] = str(user.id)  # ID de autenticación
             session['user_email'] = user.email
             session['user_name'] = contact_info.get('nombre_completo') or user.user_metadata.get('full_name', user.email)
@@ -510,7 +509,7 @@ class AuthManager:
             # Crear entrada en info_contacto si no existe
             try:
                 db.client.table('info_contacto').insert({
-                    "usuario_id": str(user.id),
+                    "auth_user_id": str(user.id),
                     "nombre_completo": full_name,
                     "nombre_empresa": company,
                     "correo_principal": email
