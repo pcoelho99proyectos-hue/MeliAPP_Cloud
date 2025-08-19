@@ -93,30 +93,86 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="temporada">Temporada</label>
-                    <select id="temporada" name="temporada" class="form-input" required>
-                        <option value="">Selecciona temporada</option>
-                        <option value="1">Primavera</option>
-                        <option value="2">Verano</option>
-                        <option value="3">Otoño</option>
-                        <option value="4">Invierno</option>
-                    </select>
+                    <label class="form-label">Temporadas de Cosecha</label>
+                    <div class="temporadas-container bg-gray-50 p-4 rounded-lg border">
+                        <div class="space-y-3 mb-4">
+                            <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                                <input type="checkbox" name="temporadas" value="PRIMAVERA" class="temporada-checkbox">
+                                <span class="text-sm font-medium">🌸 Primavera</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                                <input type="checkbox" name="temporadas" value="VERANO" class="temporada-checkbox">
+                                <span class="text-sm font-medium">☀️ Verano</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                                <input type="checkbox" name="temporadas" value="OTOÑO" class="temporada-checkbox">
+                                <span class="text-sm font-medium">🍂 Otoño</span>
+                            </label>
+                            <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                                <input type="checkbox" name="temporadas" value="INVIERNO" class="temporada-checkbox">
+                                <span class="text-sm font-medium">❄️ Invierno</span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="anio_cosecha">Año de Cosecha</label>
+                            <select id="anio_cosecha" name="anio_cosecha" class="form-input" required>
+                                <option value="">Selecciona año</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-group">
-                    <label class="form-label" for="anio">Año</label>
-                    <input type="number" id="anio" name="anio" class="form-input" 
-                           placeholder="2024" min="2020" max="2030" required>
-                </div>
-
                 <div class="form-group">
                     <label class="form-label" for="kg_producidos">Kilogramos Producidos</label>
                     <input type="number" id="kg_producidos" name="kg_producidos" class="form-input" 
                            placeholder="Ej: 150.50" min="0" max="99999.99" 
                            step="0.01" pattern="^\d+(\.\d{1,2})?$" required>
                     <small class="text-gray-500">Formato: número entero con hasta 2 decimales (ej: 150.50)</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Fecha de Registro</label>
+                    <div class="date-picker-container">
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="text-xs text-gray-600">Día</label>
+                                <select id="dia_registro" name="dia_registro" class="form-input text-sm" required>
+                                    <option value="">Día</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600">Mes</label>
+                                <select id="mes_registro" name="mes_registro" class="form-input text-sm" required>
+                                    <option value="">Mes</option>
+                                    <option value="1">Enero</option>
+                                    <option value="2">Febrero</option>
+                                    <option value="3">Marzo</option>
+                                    <option value="4">Abril</option>
+                                    <option value="5">Mayo</option>
+                                    <option value="6">Junio</option>
+                                    <option value="7">Julio</option>
+                                    <option value="8">Agosto</option>
+                                    <option value="9">Septiembre</option>
+                                    <option value="10">Octubre</option>
+                                    <option value="11">Noviembre</option>
+                                    <option value="12">Diciembre</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600">Año</label>
+                                <select id="anio_registro" name="anio_registro" class="form-input text-sm" required>
+                                    <option value="">Año</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <button type="button" id="fecha-hoy" class="text-sm text-blue-600 hover:text-blue-800">
+                                📅 Usar fecha de hoy
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -176,7 +232,7 @@
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orden</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Temporada</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Año</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Origen</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kilogramos</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Composición</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
@@ -222,7 +278,7 @@
         alertContainer.innerHTML = '';
     }
 
-    // Función para obtener composición polínica
+    // Función para obtener composición polínica en formato JSON numérico
     function getComposicionPolen() {
         const composicion = {};
         const filas = document.querySelectorAll('.composicion-fila');
@@ -233,6 +289,7 @@
             const porcentaje = parseFloat(fila.querySelector('.composicion-porcentaje').value) || 0;
             
             if (tipo && porcentaje > 0) {
+                // Almacenar como número sin símbolo de porcentaje
                 composicion[tipo] = porcentaje;
                 totalPorcentaje += porcentaje;
             }
@@ -244,6 +301,80 @@
         }
         
         return composicion;
+    }
+
+    // Función para obtener temporadas seleccionadas
+    function getTemporadasSeleccionadas() {
+        const checkboxes = document.querySelectorAll('.temporada-checkbox:checked');
+        
+        if (checkboxes.length === 0) {
+            showAlert('Debe seleccionar al menos una temporada', 'error');
+            return null;
+        }
+        
+        const temporadas = Array.from(checkboxes).map(cb => cb.value);
+        return temporadas.join(' - '); // Formato: "VERANO - OTOÑO"
+    }
+
+    // Función para obtener fecha de registro manual
+    function getFechaRegistro() {
+        const dia = document.getElementById('dia_registro').value;
+        const mes = document.getElementById('mes_registro').value;
+        const anio = document.getElementById('anio_registro').value;
+        
+        if (!dia || !mes || !anio) {
+            showAlert('Debe completar la fecha de registro', 'error');
+            return null;
+        }
+        
+        // Validar fecha
+        const fecha = new Date(anio, mes - 1, dia);
+        if (fecha.getDate() != dia || fecha.getMonth() != mes - 1 || fecha.getFullYear() != anio) {
+            showAlert('Fecha de registro inválida', 'error');
+            return null;
+        }
+        
+        // Formato ISO para PostgreSQL (YYYY-MM-DD)
+        return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+    }
+
+    // Función para inicializar selectores de fecha
+    function inicializarSelectoresFecha() {
+        // Llenar días (1-31)
+        const diaSelect = document.getElementById('dia_registro');
+        for (let i = 1; i <= 31; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i;
+            diaSelect.appendChild(option);
+        }
+        
+        // Llenar años (1990 hasta año actual)
+        const anioRegistroSelect = document.getElementById('anio_registro');
+        const anioCosechaSelect = document.getElementById('anio_cosecha');
+        const anioActual = new Date().getFullYear();
+        
+        for (let i = anioActual; i >= 1990; i--) {
+            // Año de registro
+            const optionRegistro = document.createElement('option');
+            optionRegistro.value = i;
+            optionRegistro.textContent = i;
+            anioRegistroSelect.appendChild(optionRegistro);
+            
+            // Año de cosecha
+            const optionCosecha = document.createElement('option');
+            optionCosecha.value = i;
+            optionCosecha.textContent = i;
+            anioCosechaSelect.appendChild(optionCosecha);
+        }
+        
+        // Botón "Usar fecha de hoy"
+        document.getElementById('fecha-hoy').addEventListener('click', function() {
+            const hoy = new Date();
+            document.getElementById('dia_registro').value = hoy.getDate();
+            document.getElementById('mes_registro').value = hoy.getMonth() + 1;
+            document.getElementById('anio_registro').value = hoy.getFullYear();
+        });
     }
 
     form.addEventListener('submit', async (e) => {
@@ -265,14 +396,22 @@
         loadingText.style.display = 'inline';
         
         try {
-            const formData = new FormData(form);
-            const data = {
-                usuario_id: formData.get('usuario_id'),
-                nombre_miel: formData.get('nombre_miel'),
-                temporada: formData.get('temporada'),
-                anio: parseInt(formData.get('anio')),
-                kg_producidos: parseFloat(formData.get('kg_producidos')),
-                composicion_polen: composicionPolen
+            const usuarioId = document.getElementById('usuario_id').value;
+            // Obtener temporadas y fecha de registro
+            const temporadas = getTemporadasSeleccionadas();
+            const fechaRegistro = getFechaRegistro();
+            
+            if (!temporadas || !fechaRegistro) {
+                return; // Los errores ya se mostraron en las funciones
+            }
+            
+            const formData = {
+                usuario_id: usuarioId,
+                nombre_miel: document.getElementById('nombre_miel').value,
+                temporadas: temporadas,
+                kg_producidos: parseFloat(document.getElementById('kg_producidos').value),
+                composicion_polen: composicionPolen,
+                fecha_registro: fechaRegistro
             };
             
             const response = await fetch('/api/gestionar-lote', {
@@ -280,7 +419,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(formData)
             });
             
             const result = await response.json();
@@ -347,12 +486,16 @@
                 const especiesSelect = document.getElementById('especies-zona');
                 especiesSelect.innerHTML = '<option value="">Selecciona especie de tu zona</option>';
                 
+                console.log('🌸 FRONTEND: Agregando especies al dropdown:', data.especies);
                 data.especies.forEach(especie => {
                     const option = document.createElement('option');
                     option.value = especie;
                     option.textContent = especie;
                     especiesSelect.appendChild(option);
                 });
+                
+                // Verificar que el dropdown se actualizó
+                console.log('🌸 FRONTEND: Total opciones en dropdown:', especiesSelect.options.length);
                 
                 // Mostrar información de zona
                 mostrarEstadoEspecies('success', 
@@ -418,6 +561,16 @@
         return parseFloat(kg).toFixed(2);
     }
 
+    // Función para formatear fecha de ISO a DD/MM/AAAA
+    function formatearFecha(fechaISO) {
+        if (!fechaISO) return 'N/A';
+        const fecha = new Date(fechaISO);
+        const dia = fecha.getDate().toString().padStart(2, '0');
+        const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+        const anio = fecha.getFullYear();
+        return `${dia}/${mes}/${anio}`;
+    }
+
     // Función mejorada para cargar lotes en tabla
     async function loadLotes() {
         try {
@@ -446,7 +599,7 @@
                         <td class="px-4 py-2 text-sm text-gray-900">#${lote.orden_miel || 1}</td>
                         <td class="px-4 py-2 text-sm font-medium text-gray-900">${lote.nombre_miel || 'Sin nombre'}</td>
                         <td class="px-4 py-2 text-sm text-gray-900">${lote.temporada || 'N/A'}</td>
-                        <td class="px-4 py-2 text-sm text-gray-900">${lote.anio || 'N/A'}</td>
+                        <td class="px-4 py-2 text-sm text-gray-900">${formatearFecha(lote.fecha_registro)}</td>
                         <td class="px-4 py-2 text-sm text-gray-900 font-mono">${formatearKilogramos(lote.kg_producidos || 0)} kg</td>
                         <td class="px-4 py-2 text-sm text-gray-900">
                             ${lote.composicion_polen ? Object.entries(lote.composicion_polen)
@@ -484,6 +637,38 @@
         loadLotes();
         document.getElementById('result-container').style.display = 'none';
         document.getElementById('lotes-list').style.display = 'block';
+    }
+
+    // Función para actualizar opciones de composición
+    function actualizarOpcionesComposicion(especies) {
+        console.log('🌸 FRONTEND: Actualizando opciones de composición con:', especies);
+        
+        // Actualizar el dropdown principal
+        const especiesSelect = document.getElementById('especies-zona');
+        if (especiesSelect) {
+            especiesSelect.innerHTML = '<option value="">Selecciona especie de tu zona</option>';
+            especies.forEach(especie => {
+                const option = document.createElement('option');
+                option.value = especie;
+                option.textContent = especie;
+                especiesSelect.appendChild(option);
+            });
+        }
+        
+        // Actualizar todos los selects de composición existentes
+        const composicionSelects = document.querySelectorAll('.composicion-tipo');
+        composicionSelects.forEach(select => {
+            const valorActual = select.value;
+            select.innerHTML = '<option value="">Selecciona especie</option>';
+            
+            especies.forEach(especie => {
+                const option = document.createElement('option');
+                option.value = especie;
+                option.textContent = especie;
+                if (especie === valorActual) option.selected = true;
+                select.appendChild(option);
+            });
+        });
     }
 
     // Funciones para editar y eliminar lotes
@@ -532,6 +717,9 @@
     // Inicializar al cargar la página
     document.addEventListener('DOMContentLoaded', function() {
         console.log('💻 FRONTEND: Página cargada');
+        
+        // Inicializar selectores de fecha
+        inicializarSelectoresFecha();
         
         // Cargar especies automáticamente
         setTimeout(() => {

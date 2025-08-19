@@ -298,7 +298,7 @@ class AuthManager:
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if 'user_id' not in session:
-                return redirect(url_for('web.login'))
+                return redirect(url_for('auth.login'))
             return f(*args, **kwargs)
         return decorated_function
     

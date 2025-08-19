@@ -3,9 +3,11 @@ Módulo para gestionar lotes de miel con control de orden secuencial.
 """
 import uuid
 import json
+import re
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 import logging
+from modify_DB import DatabaseModifier
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +21,8 @@ class LotesManager:
     def obtener_lotes_usuario(self, usuario_id: str) -> List[Dict[str, Any]]:
         """Obtiene todos los lotes de miel de un usuario ordenados por orden_miel."""
         try:
-            response = self.client.rpc('obtener_lotes_usuario_func', {
-                'p_usuario_id': usuario_id
-            }).execute()
+            # Usar consulta directa a la tabla origenes_botanicos
+            response = self.client.table('origenes_botanicos').select('*').eq('auth_user_id', usuario_id).order('orden_miel').execute()
             
             return response.data if response.data else []
             
@@ -48,10 +49,8 @@ class LotesManager:
                 logger.error(f"Errores de validación: {errores}")
                 return {'success': False, 'error': '; '.join(errores)}
             
-            # Preparar datos para insertar directamente en la tabla
+            # Preparar datos para la inserción
             composicion_polen = datos.get('composicion_polen', {})
-            
-            # Asegurar que composicion_polen sea un objeto JSON válido
             if isinstance(composicion_polen, str):
                 try:
                     composicion_polen = json.loads(composicion_polen)
@@ -60,37 +59,48 @@ class LotesManager:
             elif not isinstance(composicion_polen, dict):
                 composicion_polen = {}
             
+            # Asegurar formato correcto para temporada (solo primera temporada)
+            temporada = datos['temporadas']
+            if ',' in str(temporada):
+                temporada = str(temporada).split(',')[0].strip()
+            
             datos_lote = {
-                'usuario_id': usuario_id,
+                'auth_user_id': usuario_id,
                 'nombre_miel': datos['nombre_miel'],
-                'temporada': f"{datos['temporada']}-{datos['anio']}",
+                'temporada': temporada,  # Solo la primera temporada para cumplir con constraint
                 'kg_producidos': float(datos['kg_producidos']),
                 'orden_miel': siguiente_orden,
-                'composicion_polen': composicion_polen
+                'composicion_polen': composicion_polen,
+                'fecha_registro': datos['fecha_registro']  # Fecha manual en formato ISO
             }
             
             logger.info(f"Datos a insertar: {json.dumps(datos_lote, indent=2)}")
             
-            response = self.client.table('origenes_botanicos').insert(datos_lote).execute()
+            # Usar DatabaseModifier para operación autenticada
+            db_modifier = DatabaseModifier()
+            auth_client = db_modifier.get_authenticated_client()
+            
+            response = auth_client.table('origenes_botanicos').insert(datos_lote).execute()
 
             logger.info(f"Respuesta de Supabase: {response.data}")
             
             if response.data and len(response.data) > 0:
                 lote_data = response.data[0]
                 # Manejar diferentes estructuras de respuesta
-                lote_id = lote_data.get('lote_id') or lote_data.get('id')
-                orden = lote_data.get('nuevo_orden') or lote_data.get('orden_miel')
+                lote_id = lote_data.get('id')
+                orden = lote_data.get('orden_miel')
                 
                 return {
                     'success': True,
                     'lote': {
                         'id': lote_id,
-                        'usuario_id': usuario_id,
+                        'auth_user_id': usuario_id,
                         'nombre_miel': datos['nombre_miel'],
-                        'temporada': datos['temporada'],
-                        'anio': int(datos['anio']),
+                        'temporada': datos['temporadas'],
                         'kg_producidos': datos['kg_producidos'],
-                        'orden_miel': orden
+                        'orden_miel': orden,
+                        'composicion_polen': composicion_polen,
+                        'fecha_registro': datos['fecha_registro']
                     },
                     'message': f'Lote creado exitosamente con orden #{orden}'
                 }
@@ -104,11 +114,11 @@ class LotesManager:
     def actualizar_lote(self, lote_id: str, usuario_id: str, datos: Dict[str, Any]) -> Dict[str, Any]:
         """Actualiza un lote existente manteniendo el orden."""
         try:
-            # Verificar que el lote pertenece al usuario
+            # Verificar que el lote pertenece al usuario usando auth_user_id
             lote_actual = self.client.table('origenes_botanicos') \
                 .select('*') \
                 .eq('id', lote_id) \
-                .eq('usuario_id', usuario_id) \
+                .eq('auth_user_id', usuario_id) \
                 .single() \
                 .execute()
             
@@ -120,12 +130,16 @@ class LotesManager:
             if errores:
                 return {'success': False, 'error': '; '.join(errores)}
             
-            # Preparar datos para actualizar
+            # Preparar datos para actualizar según esquema real
+            fecha_actualizacion = datetime.now().strftime('%Y-%m-%d')  # Formato ISO
+            
             datos_actualizar = {
                 'nombre_miel': datos['nombre_miel'].strip(),
-                'temporada': f"{datos['temporada']}-{datos['anio']}",
+                'temporada': datos['temporadas'],  # Múltiples temporadas
                 'kg_producidos': float(datos['kg_producidos']),
-                'composicion_polen': json.dumps(datos.get('composicion_polen', {}))
+                'composicion_polen': datos.get('composicion_polen', {}),
+                'fecha_registro': datos.get('fecha_registro'),  # Fecha manual en formato ISO
+                'fecha_actualizacion': fecha_actualizacion
             }
             
             response = self.client.table('origenes_botanicos') \
@@ -186,12 +200,12 @@ class LotesManager:
             if len(lotes) != len(nuevo_orden):
                 return {'success': False, 'error': 'Número de lotes no coincide'}
             
-            # Actualizar el orden de cada lote
+            # Actualizar el orden de cada lote usando auth_user_id
             for index, lote_id in enumerate(nuevo_orden, 1):
                 self.client.table('origenes_botanicos') \
                     .update({'orden_miel': index}) \
                     .eq('id', lote_id) \
-                    .eq('usuario_id', usuario_id) \
+                    .eq('auth_user_id', usuario_id) \
                     .execute()
             
             return {
@@ -298,18 +312,23 @@ class LotesManager:
         if not datos.get('nombre_miel') or len(datos['nombre_miel'].strip()) < 2:
             errores.append("El nombre de la miel debe tener al menos 2 caracteres")
         
-        # Validar temporada
-        if not datos.get('temporada') or datos['temporada'] not in ['1', '2', '3', '4']:
-            errores.append("Debe seleccionar una temporada válida")
+        # Validar temporadas
+        temporadas = datos.get('temporadas', '')
+        if not temporadas:
+            errores.append("Debe seleccionar al menos una temporada")
+        else:
+            # Validar que las temporadas sean nombres válidos separados por guiones
+            temporadas_validas = ['VERANO', 'OTONO', 'INVIERNO', 'PRIMAVERA']
+            temporadas_list = [t.strip() for t in temporadas.split(' - ')]
+            
+            for temporada in temporadas_list:
+                if temporada not in temporadas_validas:
+                    errores.append(f"Temporada inválida: {temporada}")
         
-        # Validar año
-        if not datos.get('anio') or not str(datos['anio']).isdigit():
-            errores.append("Debe seleccionar un año válido")
-        
-        # Validar kilos
+        # Validar kilos producidos
         try:
-            kg = float(datos['kg_producidos'])
-            if kg < 0:
+            kg_producidos = float(datos.get('kg_producidos', 0))
+            if kg_producidos < 0:
                 errores.append("Los kilos producidos deben ser mayores o iguales a 0")
         except (ValueError, TypeError):
             errores.append("Los kilos producidos deben ser un número válido")
@@ -317,19 +336,34 @@ class LotesManager:
         # Validar composición polínica
         composicion = datos.get('composicion_polen', {})
         if isinstance(composicion, dict):
-            total = sum(float(v) for v in composicion.values() if str(v).replace('.', '').isdigit())
+            # Validar que todos los valores sean números válidos entre 0 y 100
+            total = 0
+            for especie, porcentaje in composicion.items():
+                try:
+                    valor = float(porcentaje)
+                    if valor < 0 or valor > 100:
+                        errores.append(f"El porcentaje para {especie} debe estar entre 0 y 100")
+                    total += valor
+                except (ValueError, TypeError):
+                    errores.append(f"El porcentaje para {especie} debe ser un número válido")
+            
+            # Validar que la suma no exceda 100%
             if total > 100:
                 errores.append("La suma de porcentajes de polen no puede exceder 100%")
+            
+            # Validar que haya al menos una especie si se proporciona composición
+            if not composicion:
+                errores.append("La composición polínica no puede estar vacía si se proporciona")
         
         return errores
     
     def _reordenar_lotes(self, usuario_id: str, orden_eliminado: int) -> None:
         """Reordena los lotes después de eliminar uno."""
         try:
-            # Obtener lotes con orden mayor al eliminado
+            # Obtener lotes con orden mayor al eliminado usando auth_user_id
             lotes_posteriores = self.client.table('origenes_botanicos') \
                 .select('id, orden_miel') \
-                .eq('usuario_id', usuario_id) \
+                .eq('auth_user_id', usuario_id) \
                 .gt('orden_miel', orden_eliminado) \
                 .execute()
             

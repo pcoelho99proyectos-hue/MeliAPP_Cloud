@@ -8,10 +8,13 @@ Este módulo contiene las rutas relacionadas con:
 """
 
 import logging
+import json
 from flask import Blueprint, render_template, request, jsonify
 from supabase_client import db
 from auth_manager import AuthManager
 from lotes_manager import lotes_manager
+from modify_DB import DatabaseModifier
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -64,27 +67,107 @@ def manejar_lote_de_miel():
                 "error": "No se proporcionaron datos en la solicitud."
             }), 400
 
-        campos_requeridos = ['usuario_id', 'ubicacion_id', 'temporada', 'kg_producidos']
+        campos_requeridos = ['usuario_id', 'temporadas', 'kg_producidos', 'fecha_registro']
         for campo in campos_requeridos:
             if campo not in datos_lote:
                 return jsonify({
                     "success": False, 
                     "error": f"Campo requerido faltante: {campo}"
                 }), 400
-
-        resultado = db.invoke_edge_function_sync('Honey_Manage_Lots', datos_lote)
         
-        if 'error' in resultado:
+        # Obtener ubicacion_id desde el perfil del usuario
+        try:
+            # Buscar información de contacto del usuario usando el método correcto
+            user_response = db.get_contacto(datos_lote['usuario_id'])
+            
+            if not user_response.data:
+                return jsonify({
+                    "success": False,
+                    "error": "Usuario no encontrado en el sistema"
+                }), 400
+            
+            user_data = user_response.data
+            ubicacion_id = user_data.get('id')  # Usar el ID del registro de info_contacto como ubicacion_id
+            
+            if not ubicacion_id:
+                return jsonify({
+                    "success": False,
+                    "error": "Usuario no tiene ubicación registrada"
+                }), 400
+                
+            # Agregar ubicacion_id a los datos
+            datos_lote['ubicacion_id'] = ubicacion_id
+            
+        except Exception as e:
+            logger.error(f"Error al obtener ubicación del usuario: {e}")
             return jsonify({
                 "success": False,
-                "error": resultado.get('error', 'Error desconocido en la Edge Function')
-            }), 400
+                "error": f"Error al obtener ubicación del usuario: {str(e)}"
+            }), 500
 
-        return jsonify({
-            "success": True,
-            "loteId": resultado.get('loteId'),
-            "data": resultado
-        }), 200
+        # Usar DatabaseModifier para crear lote con esquema correcto
+        try:
+            db_modifier = DatabaseModifier()
+            auth_client = db_modifier.get_authenticated_client()
+            
+            # Obtener el siguiente orden para el usuario
+            lotes_actuales = auth_client.table('origenes_botanicos').select('*').eq('auth_user_id', datos_lote['usuario_id']).execute()
+            siguiente_orden = len(lotes_actuales.data) + 1 if lotes_actuales.data else 1
+            
+            # Preparar datos según esquema real de origenes_botanicos
+            # La fecha_registro viene del frontend en formato ISO (YYYY-MM-DD)
+            # Procesar temporadas - usar el formato textual directamente
+            temporada = datos_lote.get('temporadas', 'VERANO')
+            
+            lote_data = {
+                'orden_miel': siguiente_orden,
+                'nombre_miel': datos_lote['nombre_miel'],
+                'temporada': temporada,  # Solo la primera temporada para cumplir con constraint
+                'kg_producidos': float(datos_lote['kg_producidos']),
+                'composicion_polen': datos_lote['composicion_polen'] if isinstance(datos_lote['composicion_polen'], dict) else {},
+                'fecha_registro': datos_lote['fecha_registro'],  # Fecha manual en formato ISO
+                'auth_user_id': datos_lote['usuario_id']
+            }
+            
+            logger.info(f"Datos del lote a insertar: {json.dumps(lote_data, indent=2, default=str)}")
+            
+            # Verificar si es actualización o creación
+            if 'lote_id' in datos_lote:
+                # Actualizar lote existente - NO modificar fecha_registro (es inmutable)
+                del lote_data['fecha_registro']  # Remover para no sobrescribir
+                lote_data['fecha_actualizacion'] = datetime.now().strftime('%Y-%m-%d')
+                response = auth_client.table('origenes_botanicos').update(lote_data).eq('id', datos_lote['lote_id']).execute()
+            else:
+                # Crear nuevo lote
+                response = auth_client.table('origenes_botanicos').insert(lote_data).execute()
+            
+            if response.data and len(response.data) > 0:
+                lote_creado = response.data[0]
+                logger.info(f"Lote creado exitosamente: {lote_creado}")
+                return jsonify({
+                    "success": True,
+                    "loteId": lote_creado.get('id'),
+                    "data": {
+                        "id": lote_creado.get('id'),
+                        "orden": lote_creado.get('orden_miel'),
+                        "nombre_miel": lote_creado.get('nombre_miel'),
+                        "temporada": lote_creado.get('temporada'),
+                        "kg_producidos": lote_creado.get('kg_producidos'),
+                        "fecha_registro": lote_creado.get('fecha_registro')
+                    }
+                }), 200
+            else:
+                return jsonify({
+                    "success": False,
+                    "error": "No se pudo crear/actualizar el lote"
+                }), 400
+                
+        except Exception as e:
+            logger.error(f"Error al crear/actualizar lote: {e}")
+            return jsonify({
+                "success": False,
+                "error": f"Error al procesar el lote: {str(e)}"
+            }), 500
 
     except ValueError as ve:
         return jsonify({
