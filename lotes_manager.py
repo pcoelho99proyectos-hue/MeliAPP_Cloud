@@ -203,29 +203,92 @@ class LotesManager:
             logger.error(f"Error al reordenar lotes: {str(e)}")
             return {'success': False, 'error': str(e)}
     
-    def obtener_especies_por_zona(self, usuario_id: str) -> List[str]:
-        """Obtiene las especies florales según la zona geográfica del usuario."""
+    def obtener_especies_por_zona(self, usuario_id: str) -> Dict[str, Any]:
+        """Obtiene las especies florales según la zona geográfica del usuario con debug completo."""
         try:
-            # Por ahora retornar lista básica, luego se puede personalizar por zona
-            especies_base = [
-                'Ulmo',
-                'Quillay',
-                'Eucalipto',
-                'Tiaca',
-                'Lingue',
-                'Avellano',
-                'Maitén',
-                'Raulí',
-                'Roble',
-                'Flores Silvestres',
-                'Mielato',
-                'Otros'
-            ]
-            return especies_base
+            logger.info(f"=== DEBUG ESPECIES POR ZONA ===")            
+            logger.info(f"🔍 Buscando especies para usuario: {usuario_id}")
+            
+            # 1. Obtener información de contacto del usuario
+            response = self.client.table('info_contacto').select('*').eq('auth_user_id', usuario_id).execute()
+            
+            if not response.data or len(response.data) == 0:
+                logger.warning(f"⚠️ No se encontró info_contacto para usuario {usuario_id}")
+                return {
+                    'success': False,
+                    'message': 'Usuario no encontrado en sistema',
+                    'especies': [],
+                    'comuna': None
+                }
+            
+            user_data = response.data[0]
+            comuna = user_data.get('comuna')
+            logger.info(f"📍 Comuna detectada: {comuna}")
+            
+            if not comuna:
+                logger.warning(f"⚠️ Usuario {usuario_id} no tiene comuna registrada")
+                return {
+                    'success': False,
+                    'message': 'Usuario no tiene comuna registrada',
+                    'especies': [],
+                    'comuna': None
+                }
+            
+            # 2. Obtener especies del CSV usando botanical_chart
+            from botanical_chart import read_botanical_classes
+            
+            try:
+                classes_data = read_botanical_classes()
+                logger.info(f"📚 Datos CSV cargados: {len(classes_data)} comunas disponibles")
+                
+                if comuna in classes_data:
+                    # Extraer todas las especies de todas las clases para esta comuna
+                    especies = []
+                    for clase, especies_clase in classes_data[comuna].items():
+                        especies.extend(especies_clase)
+                    
+                    # Remover duplicados manteniendo orden
+                    especies = list(dict.fromkeys(especies))
+                    logger.info(f"🌸 Especies del CSV para {comuna}: {especies}")
+                    
+                else:
+                    logger.warning(f"⚠️ Comuna {comuna} no encontrada en CSV")
+                    especies = []
+                    
+            except Exception as csv_error:
+                logger.error(f"❌ Error al cargar CSV: {csv_error}")
+                especies = []
+            logger.info(f"🌸 Especies encontradas para {comuna}: {especies}")
+            logger.info(f"📊 Total especies disponibles: {len(especies)}")
+            
+            if especies:
+                return {
+                    'success': True,
+                    'usuario_id': usuario_id,
+                    'comuna': comuna,
+                    'especies': especies,
+                    'total_especies': len(especies),
+                    'message': f'Especies disponibles para {comuna}'
+                }
+            else:
+                logger.warning(f"⚠️ No hay especies registradas para la comuna: {comuna}")
+                return {
+                    'success': False,
+                    'usuario_id': usuario_id,
+                    'comuna': comuna,
+                    'especies': [],
+                    'total_especies': 0,
+                    'message': f'No hay especies registradas para {comuna}'
+                }
             
         except Exception as e:
-            logger.error(f"Error al obtener especies: {str(e)}")
-            return []
+            logger.error(f"❌ Error al obtener especies para usuario {usuario_id}: {str(e)}")
+            return {
+                'success': False,
+                'message': f'Error al obtener especies: {str(e)}',
+                'especies': [],
+                'comuna': None
+            }
     
     def _validar_datos_lote(self, datos: Dict[str, Any]) -> List[str]:
         """Valida los datos del lote."""

@@ -83,56 +83,114 @@
         <div id="alert-container"></div>
         
         <form id="lote-form" class="bg-white shadow-lg rounded-lg p-6">
-            <div class="form-group">
-                <label class="form-label" for="usuario_id">ID del Usuario</label>
-                <input type="text" id="usuario_id" name="usuario_id" class="form-input" 
-                       placeholder="Ingresa el UUID del usuario" required>
+            <input type="hidden" id="usuario_id" name="usuario_id" value="{{ session['user_id'] if session.get('user_id') else '' }}">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label class="form-label" for="nombre_miel">Nombre de la Miel</label>
+                    <input type="text" id="nombre_miel" name="nombre_miel" class="form-input" 
+                           placeholder="Ej: Miel de Ulmo Primavera" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="temporada">Temporada</label>
+                    <select id="temporada" name="temporada" class="form-input" required>
+                        <option value="">Selecciona temporada</option>
+                        <option value="1">Primavera</option>
+                        <option value="2">Verano</option>
+                        <option value="3">Otoño</option>
+                        <option value="4">Invierno</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label class="form-label" for="anio">Año</label>
+                    <input type="number" id="anio" name="anio" class="form-input" 
+                           placeholder="2024" min="2020" max="2030" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="kg_producidos">Kilogramos Producidos</label>
+                    <input type="number" id="kg_producidos" name="kg_producidos" class="form-input" 
+                           placeholder="Ej: 150.50" min="0" max="99999.99" 
+                           step="0.01" pattern="^\d+(\.\d{1,2})?$" required>
+                    <small class="text-gray-500">Formato: número entero con hasta 2 decimales (ej: 150.50)</small>
+                </div>
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="ubicacion_id">ID de la Ubicación</label>
-                <input type="text" id="ubicacion_id" name="ubicacion_id" class="form-input" 
-                       placeholder="Ingresa el UUID de la ubicación" required>
+                <label class="form-label">Composición de Polen por Zona</label>
+                <div id="composicion-container" class="space-y-2">
+                    <div class="flex items-center space-x-2">
+                        <select class="composicion-tipo form-input flex-1" id="especies-zona">
+                            <option value="">Cargando especies de tu zona...</option>
+                        </select>
+                        <input type="number" class="composicion-porcentaje form-input w-24" 
+                               placeholder="%" min="0" max="100" step="1">
+                        <button type="button" class="btn-remove-composicion text-red-600 hover:text-red-800">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+                <button type="button" id="add-composicion" class="text-sm text-blue-600 hover:text-blue-800">
+                    + Agregar especie
+                </button>
+                <small class="text-gray-500" id="zona-info">Las especies se cargarán según tu comuna registrada</small>
             </div>
 
-            <div class="form-group">
-                <label class="form-label" for="temporada">Temporada</label>
-                <input type="text" id="temporada" name="temporada" class="form-input" 
-                       placeholder="Ej: 2024-2025" required>
+            <div class="flex space-x-4">
+                <button type="submit" class="btn-primary flex-1">
+                    <span class="submit-text">Guardar Lote</span>
+                    <span class="loading">Guardando...</span>
+                </button>
+                <button type="button" onclick="resetForm()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    Limpiar Formulario
+                </button>
             </div>
-
-            <div class="form-group">
-                <label class="form-label" for="kg_producidos">Kilogramos Producidos</label>
-                <input type="number" id="kg_producidos" name="kg_producidos" class="form-input" 
-                       placeholder="Ej: 150.5" step="0.1" required>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="descripcion_general">Descripción General</label>
-                <textarea id="descripcion_general" name="descripcion_general" class="form-input form-textarea" 
-                          placeholder="Describe las características del lote de miel"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="composicion_polen">Composición de Polen</label>
-                <input type="text" id="composicion_polen" name="composicion_polen" class="form-input" 
-                       placeholder="Ej: flores-silvestres-80%|eucalipto-20%">
-                <small class="text-gray-500">Formato: tipo-porcentaje|tipo-porcentaje</small>
-            </div>
-
-            <button type="submit" class="btn-primary w-full">
-                <span class="submit-text">Guardar Lote</span>
-                <span class="loading">Guardando...</span>
-            </button>
         </form>
 
         <div id="result-container" class="mt-6" style="display: none;">
             <div class="bg-green-50 border border-green-200 rounded-lg p-4">
                 <h3 class="text-lg font-semibold text-green-800 mb-2">✅ Lote Guardado Exitosamente</h3>
                 <p class="text-green-700">ID del lote: <span id="lote-id" class="font-mono"></span></p>
-                <button onclick="resetForm()" class="mt-2 text-green-600 hover:text-green-800 underline">
-                    Registrar otro lote
-                </button>
+                <p class="text-green-700">Orden: <span id="lote-orden" class="font-mono"></span></p>
+                <div class="mt-4 flex space-x-4">
+                    <button onclick="resetForm()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                        Registrar otro lote
+                    </button>
+                    <button onclick="viewLotes()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        Ver mis lotes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="lotes-list" class="mt-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Mis Lotes de Miel Registrados</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-gray-200 rounded-lg" id="tabla-lotes">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orden</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Temporada</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Año</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kilogramos</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Composición</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lotes-tbody" class="divide-y divide-gray-200">
+                        <!-- Los lotes se cargarán dinámicamente -->
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-4 text-center text-sm text-gray-500" colspan="7">
+                                No hay lotes registrados aún. Crea tu primer lote arriba.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -164,12 +222,42 @@
         alertContainer.innerHTML = '';
     }
 
+    // Función para obtener composición polínica
+    function getComposicionPolen() {
+        const composicion = {};
+        const filas = document.querySelectorAll('.composicion-fila');
+        let totalPorcentaje = 0;
+        
+        filas.forEach(fila => {
+            const tipo = fila.querySelector('.composicion-tipo').value;
+            const porcentaje = parseFloat(fila.querySelector('.composicion-porcentaje').value) || 0;
+            
+            if (tipo && porcentaje > 0) {
+                composicion[tipo] = porcentaje;
+                totalPorcentaje += porcentaje;
+            }
+        });
+        
+        if (totalPorcentaje > 100) {
+            showAlert('La suma de porcentajes no puede exceder 100%', 'error');
+            return null;
+        }
+        
+        return composicion;
+    }
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const submitBtn = form.querySelector('button[type="submit"]');
         const submitText = submitBtn.querySelector('.submit-text');
         const loadingText = submitBtn.querySelector('.loading');
+        
+        // Validar composición polínica
+        const composicionPolen = getComposicionPolen();
+        if (composicionPolen === null) {
+            return;
+        }
         
         // Deshabilitar botón y mostrar loading
         submitBtn.disabled = true;
@@ -178,10 +266,14 @@
         
         try {
             const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Convertir kg_producidos a número
-            data.kg_producidos = parseFloat(data.kg_producidos);
+            const data = {
+                usuario_id: formData.get('usuario_id'),
+                nombre_miel: formData.get('nombre_miel'),
+                temporada: formData.get('temporada'),
+                anio: parseInt(formData.get('anio')),
+                kg_producidos: parseFloat(formData.get('kg_producidos')),
+                composicion_polen: composicionPolen
+            };
             
             const response = await fetch('/api/gestionar-lote', {
                 method: 'POST',
@@ -196,18 +288,330 @@
             if (result.success) {
                 showAlert('Lote guardado exitosamente', 'success');
                 loteIdSpan.textContent = result.loteId;
+                document.getElementById('lote-orden').textContent = result.data?.orden || 'N/A';
                 resultContainer.style.display = 'block';
                 form.style.display = 'none';
+                
+                // Cargar lotes actualizados
+                loadLotes();
             } else {
                 showAlert(result.error || 'Error al guardar el lote');
             }
         } catch (error) {
             showAlert('Error de conexión: ' + error.message);
         } finally {
-            // Rehabilitar botón
             submitBtn.disabled = false;
             submitText.style.display = 'inline';
             loadingText.style.display = 'none';
+        }
+    });
+
+    async function cargarEspeciesPorZona() {
+        console.log('🚀 FRONTEND: Iniciando carga de especies por zona');
+        
+        try {
+            const usuarioId = document.getElementById('usuario_id').value;
+            console.log('🔍 FRONTEND: Usuario ID detectado:', usuarioId);
+            
+            if (!usuarioId) {
+                console.error('❌ FRONTEND: No se encontró usuario ID');
+                mostrarEstadoEspecies('error', 'No se pudo identificar al usuario');
+                return;
+            }
+            
+            // Mostrar estado de carga
+            mostrarEstadoEspecies('loading', 'Verificando tu zona geográfica...');
+            
+            console.log('🌍 FRONTEND: Consultando especies para zona del usuario...');
+            
+            // Debug de la petición HTTP
+            console.log('🔗 FRONTEND: URL de petición:', `/api/usuario-info/${usuarioId}`);
+            
+            const response = await fetch(`/api/usuario-info/${usuarioId}`);
+            
+            console.log('📊 FRONTEND: Response status:', response.status);
+            console.log('📊 FRONTEND: Response ok:', response.ok);
+            console.log('📊 FRONTEND: Response headers:', response.headers);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            console.log('📊 FRONTEND: Respuesta del servidor:', data);
+            
+            if (data.success && data.especies && data.especies.length > 0) {
+                console.log(`✅ FRONTEND: Especies encontradas para ${data.comuna}:`, data.especies);
+                
+                // Actualizar selector de especies
+                const especiesSelect = document.getElementById('especies-zona');
+                especiesSelect.innerHTML = '<option value="">Selecciona especie de tu zona</option>';
+                
+                data.especies.forEach(especie => {
+                    const option = document.createElement('option');
+                    option.value = especie;
+                    option.textContent = especie;
+                    especiesSelect.appendChild(option);
+                });
+                
+                // Mostrar información de zona
+                mostrarEstadoEspecies('success', 
+                    `🌸 ${data.total_especies} especies disponibles para ${data.comuna}`);
+                
+                // Actualizar selects de composición polínica
+                actualizarOpcionesComposicion(data.especies);
+                
+                console.log('✨ FRONTEND: Especies cargadas exitosamente');
+                
+            } else {
+                console.warn('⚠️ FRONTEND: No se encontraron especies:', data.message);
+                mostrarEstadoEspecies('warning', data.message || 'No hay especies para tu zona');
+                
+                const especiesSelect = document.getElementById('especies-zona');
+                especiesSelect.innerHTML = '<option value="">Sin especies disponibles</option>';
+            }
+        } catch (error) {
+            console.error('❌ FRONTEND: Error completo:', error);
+            console.error('❌ FRONTEND: Tipo de error:', error.name);
+            console.error('❌ FRONTEND: Mensaje:', error.message);
+            console.error('❌ FRONTEND: Stack trace:', error.stack);
+            
+            // Error más específico
+            let mensajeError = 'Error de conexión al verificar especies';
+            if (error.name === 'TypeError') {
+                mensajeError = 'Error de red - Verifica tu conexión';
+            } else if (error.name === 'SyntaxError') {
+                mensajeError = 'Error de respuesta del servidor';
+            }
+            
+            mostrarEstadoEspecies('error', mensajeError);
+            
+            const especiesSelect = document.getElementById('especies-zona');
+            if (especiesSelect) {
+                especiesSelect.innerHTML = '<option value="">Error al cargar</option>';
+            }
+        }
+    }
+    
+    function mostrarEstadoEspecies(tipo, mensaje) {
+        const zonaInfo = document.getElementById('zona-info');
+        const iconos = {
+            'loading': '🔄',
+            'success': '✅',
+            'warning': '⚠️',
+            'error': '❌'
+        };
+        
+        const clases = {
+            'loading': 'text-sm text-blue-600',
+            'success': 'text-sm text-green-600',
+            'warning': 'text-sm text-yellow-600',
+            'error': 'text-sm text-red-600'
+        };
+        
+        zonaInfo.textContent = `${iconos[tipo]} ${mensaje}`;
+        zonaInfo.className = clases[tipo];
+    }
+
+    // Función para formatear kilogramos con 2 decimales
+    function formatearKilogramos(kg) {
+        return parseFloat(kg).toFixed(2);
+    }
+
+    // Función mejorada para cargar lotes en tabla
+    async function loadLotes() {
+        try {
+            const usuarioId = document.getElementById('usuario_id').value;
+            if (!usuarioId) return;
+            
+            const response = await fetch(`/api/lotes/${usuarioId}`);
+            const lotes = await response.json();
+            
+            const tbody = document.getElementById('lotes-tbody');
+            tbody.innerHTML = '';
+            
+            if (lotes.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td class="px-4 py-4 text-center text-sm text-gray-500" colspan="7">
+                            No hay lotes registrados aún. Crea tu primer lote arriba.
+                        </td>
+                    </tr>
+                `;
+            } else {
+                lotes.forEach(lote => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50';
+                    tr.innerHTML = `
+                        <td class="px-4 py-2 text-sm text-gray-900">#${lote.orden_miel || 1}</td>
+                        <td class="px-4 py-2 text-sm font-medium text-gray-900">${lote.nombre_miel || 'Sin nombre'}</td>
+                        <td class="px-4 py-2 text-sm text-gray-900">${lote.temporada || 'N/A'}</td>
+                        <td class="px-4 py-2 text-sm text-gray-900">${lote.anio || 'N/A'}</td>
+                        <td class="px-4 py-2 text-sm text-gray-900 font-mono">${formatearKilogramos(lote.kg_producidos || 0)} kg</td>
+                        <td class="px-4 py-2 text-sm text-gray-900">
+                            ${lote.composicion_polen ? Object.entries(lote.composicion_polen)
+                                .map(([especie, porcentaje]) => `${especie}: ${porcentaje}%`)
+                                .join(', ') : 'Sin datos'}
+                        </td>
+                        <td class="px-4 py-2 text-sm text-gray-900">
+                            <button onclick="editarLote('${lote.id}')" class="text-blue-600 hover:text-blue-800 mr-2">
+                                Editar
+                            </button>
+                            <button onclick="eliminarLote('${lote.id}')" class="text-red-600 hover:text-red-800">
+                                Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                    tbody.appendChild(tr);
+                });
+            }
+        } catch (error) {
+            console.error('Error al cargar lotes:', error);
+            const tbody = document.getElementById('lotes-tbody');
+            tbody.innerHTML = `
+                <tr>
+                    <td class="px-4 py-4 text-center text-sm text-red-500" colspan="7">
+                        Error al cargar lotes. Por favor, intenta nuevamente.
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // Función para ver lotes
+    function viewLotes() {
+        loadLotes();
+        document.getElementById('result-container').style.display = 'none';
+        document.getElementById('lotes-list').style.display = 'block';
+    }
+
+    // Funciones para editar y eliminar lotes
+    function editarLote(loteId) {
+        // Implementar edición de lote
+        console.log('Editar lote:', loteId);
+        // Aquí podrías cargar los datos del lote en el formulario
+    }
+
+    function eliminarLote(loteId) {
+        if (confirm('¿Estás seguro de eliminar este lote?')) {
+            // Implementar eliminación
+            console.log('Eliminar lote:', loteId);
+        }
+    }
+
+    // Sistema de composición dinámica con especies por zona
+    document.getElementById('add-composicion').addEventListener('click', function() {
+        const container = document.getElementById('composicion-container');
+        const zonaSelect = document.getElementById('especies-zona');
+        
+        const newRow = document.createElement('div');
+        newRow.className = 'flex items-center space-x-2 composicion-fila';
+        
+        // Copiar las opciones del select principal
+        const optionsHTML = zonaSelect.innerHTML;
+        
+        newRow.innerHTML = `
+            <select class="composicion-tipo form-input flex-1">
+                ${optionsHTML}
+            </select>
+            <input type="number" class="composicion-porcentaje form-input w-24" 
+                   placeholder="%" min="0" max="100" step="1">
+            <button type="button" class="btn-remove-composicion text-red-600 hover:text-red-800">
+                ✕
+            </button>
+        `;
+        container.appendChild(newRow);
+        
+        // Event listener para eliminar
+        newRow.querySelector('.btn-remove-composicion').addEventListener('click', function() {
+            newRow.remove();
+        });
+    });
+
+    // Inicializar al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('💻 FRONTEND: Página cargada');
+        
+        // Cargar especies automáticamente
+        setTimeout(() => {
+            cargarEspeciesPorZona();
+        }, 500);
+        
+        loadLotes();
+        
+        // Agregar verificación en tiempo real al selector de especies
+        if (especiesSelect) {
+            especiesSelect.addEventListener('click', function() {
+                console.log('💆 FRONTEND: Click en selector de especies - Verificando estado...');
+                const usuarioId = document.getElementById('usuario_id').value;
+                if (usuarioId) {
+                    console.log('🔄 FRONTEND: Re-verificando especies disponibles...');
+                    cargarEspeciesPorZona();
+                } else {
+                    console.error('❌ FRONTEND: No hay usuario ID al hacer click');
+                }
+            });
+        }
+        
+        // Verificación en tiempo real para composición polínica
+        const composicionSelects = document.querySelectorAll('[id^="composicion-"]');
+        composicionSelects.forEach(select => {
+            select.addEventListener('focus', function() {
+                console.log('🌼 FRONTEND: Focus en composición polínica - Verificando opciones...');
+                const usuarioId = document.getElementById('usuario_id').value;
+                if (usuarioId) {
+                    // Verificar que las opciones estén actualizadas
+                    verificarOpcionesComposicion();
+                }
+            });
+        });
+    });
+    
+    function verificarOpcionesComposicion() {
+        const especiesSelect = document.getElementById('especies-zona');
+        const especiesDisponibles = Array.from(especiesSelect.options)
+            .slice(1) // Omitir la primera opción "Selecciona..."
+            .map(option => option.value)
+            .filter(value => value !== '');
+            
+        if (especiesDisponibles.length > 0) {
+            console.log('✅ FRONTEND: Opciones de composición verificadas:', especiesDisponibles);
+            actualizarOpcionesComposicion(especiesDisponibles);
+        } else {
+            console.warn('⚠️ FRONTEND: No hay especies disponibles para composición');
+        }
+    }
+
+    // Función para actualizar opciones de composición polínica
+    function actualizarOpcionesComposicion(especies) {
+        console.log('🔄 FRONTEND: Actualizando opciones de composición con especies:', especies);
+        
+        // Actualizar todos los selects de composición existentes
+        const composicionSelects = document.querySelectorAll('.composicion-tipo');
+        
+        composicionSelects.forEach(select => {
+            const valorActual = select.value;
+            select.innerHTML = '<option value="">Selecciona especie</option>';
+            
+            especies.forEach(especie => {
+                const option = document.createElement('option');
+                option.value = especie;
+                option.textContent = especie;
+                if (especie === valorActual) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+        });
+        
+        console.log('✅ FRONTEND: Opciones de composición actualizadas');
+    }
+
+    // Event listener para eliminar composiciones existentes
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-remove-composicion')) {
+            e.target.closest('.composicion-fila').remove();
         }
     });
 </script>

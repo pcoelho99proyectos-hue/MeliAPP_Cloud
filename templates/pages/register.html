@@ -155,7 +155,7 @@
                 <div class="mt-6 text-center">
                     <p class="text-sm text-gray-600">
                         ¿Ya tienes una cuenta?
-                        <a href="/login" class="font-medium text-amber-600 hover:text-amber-500">Inicia sesión aquí</a>
+                        <a href="{{ url_for('auth.login') }}" class="font-medium text-amber-600 hover:text-amber-500">Inicia sesión aquí</a>
                     </p>
                 </div>
             </div>
@@ -323,7 +323,7 @@ form.addEventListener('submit', async (e) => {
             role: formData.get('role')
         };
         
-        const response = await fetch("{{ url_for('web.register') }}", {
+        const response = await fetch("{{ url_for('auth.register') }}", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -352,7 +352,7 @@ form.addEventListener('submit', async (e) => {
 
 // Registro con Google
 function loginWithGoogle() {
-    window.location.href = "{{ url_for('web.api_google_auth') }}";
+    window.location.href = "{{ url_for('auth.api_google_auth') }}";
 }
 </script>
 {% endblock %}

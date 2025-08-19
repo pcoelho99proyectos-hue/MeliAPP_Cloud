@@ -64,17 +64,28 @@ def load_user():
 # Configuración de Blueprints
 # ====================
 
-from routes import api_bp, web_bp
+from auth_manager_routes import auth_bp
 from edit_user_data import edit_bp
-from debug_endpoint import debug_bp
 from botanical_chart import botanical_bp
+from supabase_client_routes import supabase_bp
+from searcher_routes import search_bp, search_web_bp
+from data_tables_routes import data_tables_bp
+from lotes_routes import lotes_api_bp, lotes_web_bp
+from web_routes import web_bp
+from profile_routes import profile_bp
 
 # Registrar blueprints
-app.register_blueprint(api_bp)
 app.register_blueprint(web_bp)
-app.register_blueprint(edit_bp)
-app.register_blueprint(debug_bp)
+app.register_blueprint(auth_bp)
 app.register_blueprint(botanical_bp)
+app.register_blueprint(supabase_bp)
+app.register_blueprint(search_bp)
+app.register_blueprint(search_web_bp)
+app.register_blueprint(data_tables_bp)
+app.register_blueprint(lotes_api_bp)
+app.register_blueprint(lotes_web_bp)
+app.register_blueprint(profile_bp)
+app.register_blueprint(edit_bp)
 
 def list_routes():
     """
@@ -266,7 +277,7 @@ def test_database_connection():
     """
     try:
         # Intentar una consulta simple para verificar la conexión
-        response = db.client.table('usuarios').select('id').limit(1).execute()
+        response = db.client.table('usuarios').select('auth_user_id').limit(1).execute()
         if response.data is not None:
             return True, "Conexión exitosa con Supabase"
         else:

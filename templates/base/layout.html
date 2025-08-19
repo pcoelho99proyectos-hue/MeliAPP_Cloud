@@ -82,13 +82,13 @@
                                  class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                                 <a href="{% if g.user.user_uuid %}/profile/{{ g.user.user_uuid }}{% else %}#{% endif %}" 
                                    class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Mi Perfil</a>
-                                <a href="/logout" 
+                                <a href="{{ url_for('auth.logout') }}" 
                                    class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Cerrar Sesión</a>
                             </div>
                         </div>
                     {% else %}
-                        <a href="/login" class="text-slate-600 hover:text-primary transition-colors">Iniciar Sesión</a>
-                        <a href="/register" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors">Registrarse</a>
+                        <a href="{{ url_for('auth.login') }}" class="text-slate-600 hover:text-primary transition-colors">Iniciar Sesión</a>
+                        <a href="{{ url_for('auth.register') }}" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors">Registrarse</a>
                     {% endif %}
                 </nav>
                 
