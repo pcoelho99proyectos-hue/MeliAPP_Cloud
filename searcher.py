@@ -531,7 +531,8 @@ class Searcher:
     
     def get_user_profile_data(self, auth_user_id: str) -> Optional[Dict]:
         """
-        Obtener datos completos del perfil de usuario incluyendo información relacionada.
+        Obtener datos completos del perfil de usuario usando la función RPC 'get_user_profile'.
+        Esta función es 'SECURITY DEFINER' y puede eludir RLS para obtener datos de perfil público.
         
         Args:
             auth_user_id: auth_user_id del usuario
@@ -540,47 +541,30 @@ class Searcher:
             dict: Datos completos del usuario o None
         """
         try:
-            # Obtener datos del usuario
-            user_response = self.supabase.table('usuarios').select(
-                'auth_user_id,username,tipo_usuario,role,status,activo,fecha_registro'
-            ).eq('auth_user_id', auth_user_id).execute()
-            user = user_response.data[0] if user_response.data else None
+            # 1. Llamar a la función RPC segura para obtener datos de perfil (usuario, contacto, ubicaciones)
+            profile_response = self.supabase.rpc('get_user_profile', {'p_auth_user_id': auth_user_id}).execute()
             
-            if not user:
+            if not profile_response.data:
+                logger.warning(f"No se encontró perfil para el usuario {auth_user_id} usando RPC.")
                 return None
+
+            profile_data = profile_response.data
             
-            # Obtener información de contacto
-            contact_response = self.supabase.table('info_contacto').select(
-                'id,auth_user_id,nombre_completo,nombre_empresa,correo_principal,telefono_principal,direccion,comuna,region'
-            ).eq('auth_user_id', auth_user_id).execute()
-            contact = contact_response.data[0] if contact_response.data else {}
-            
-            # Obtener ubicaciones (Oficinas apícolas)
-            locations_response = self.supabase.table('ubicaciones').select(
-                'id,auth_user_id,nombre,latitud,longitud,norma_geo,descripcion'
-            ).eq('auth_user_id', auth_user_id).execute()
-            locations = locations_response.data if locations_response.data else []
-            
-            # Obtener orígenes botánicos (producciones apícolas)
+            # 2. Obtener datos adicionales que SÍ deben respetar RLS (producción, solicitudes)
+            #    Estas consultas solo funcionarán si el usuario autenticado es el dueño de los datos.
             producciones_response = self.supabase.table('origenes_botanicos').select('*').eq('auth_user_id', auth_user_id).execute()
-            producciones = producciones_response.data if producciones_response.data else []
-            
-            # Obtener orígenes botánicos
-            origenes_botanicos = producciones  # Misma tabla según nuevo esquema
-            
-            # Obtener solicitudes
             solicitudes_response = self.supabase.table('solicitudes_apicultor').select('*').eq('auth_user_id', auth_user_id).execute()
-            solicitudes = solicitudes_response.data if solicitudes_response.data else []
-            
+
+            # 3. Ensamblar la respuesta final
             return {
-                'user': user,
-                'contact_info': contact,
-                'locations': locations,
-                'production': producciones,
-                'botanical_origins': origenes_botanicos,
-                'requests': solicitudes
+                'user': profile_data.get('usuario'),
+                'contact_info': profile_data.get('info_contacto'),
+                'locations': profile_data.get('ubicaciones') or [],
+                'production': producciones_response.data if producciones_response.data else [],
+                'botanical_origins': producciones_response.data if producciones_response.data else [],
+                'requests': solicitudes_response.data if solicitudes_response.data else []
             }
             
         except Exception as e:
-            logger.error(f"Error al obtener datos del perfil: {str(e)}")
+            logger.error(f"Error al obtener datos del perfil con RPC para {auth_user_id}: {str(e)}", exc_info=True)
             return None

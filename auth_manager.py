@@ -221,12 +221,13 @@ class AuthManager:
         """
         Única fuente de cliente Supabase autenticado
         Elimina todas las redundancias de búsqueda de tokens
+        Maneja automáticamente el refresco de tokens JWT expirados
         """
         if cls._authenticated_client is not None:
             return cls._authenticated_client
             
         try:
-            # Obtener token de la única fuente confiable
+            # Obtener token de la única fuente confiable (ya intenta refrescar si es necesario)
             token = cls._get_auth_token()
             if not token:
                 logger.error("No hay token de autenticación disponible")
@@ -240,22 +241,101 @@ class AuthManager:
             )
             auth_client.postgrest.auth(token)
             
-            # Verificar que funciona
-            auth_client.table('usuarios').select('auth_user_id').limit(1).execute()
-            
-            cls._authenticated_client = auth_client
-            return auth_client
+            try:
+                # Verificar que funciona
+                auth_client.table('usuarios').select('auth_user_id').limit(1).execute()
+                
+                # Si llegó aquí, el cliente funciona correctamente
+                cls._authenticated_client = auth_client
+                return auth_client
+                
+            except Exception as e:
+                error_str = str(e).lower()
+                
+                # Detectar error de JWT expirado
+                if 'jwt expired' in error_str or 'token expired' in error_str:
+                    # Marcar que hubo un error de JWT expirado
+                    session['jwt_expired_error'] = True
+                    logger.warning("Token JWT expirado detectado. Marcando para refresco.")
+                    
+                    # Intentar refrescar inmediatamente y crear un nuevo cliente
+                    if cls._refresh_token():
+                        logger.info("Token refrescado, intentando crear cliente nuevamente")
+                        # Recursión para volver a intentar con el token refrescado
+                        # (solo se intentará una vez más gracias al flag jwt_expired_error que se limpia)
+                        return cls.get_authenticated_client()
+                
+                # Otros errores
+                logger.error(f"Error al verificar cliente autenticado: {e}")
+                return None
             
         except Exception as e:
             logger.error(f"Error creando cliente autenticado: {e}")
             return None
     
     @classmethod
+    def _should_refresh_token(cls):
+        """
+        Determina si el token debe ser refrescado basado en errores previos
+        y en la disponibilidad de un refresh token.
+        
+        Returns:
+            bool: True si el token debe refrescarse, False en caso contrario.
+        """
+        # Si hay un flag de error de JWT, intentar refrescar
+        if session.get('jwt_expired_error', False) and 'refresh_token' in session:
+            # Limpiar el flag de error
+            session['jwt_expired_error'] = False
+            logger.info("Detectado error de JWT expirado, intentando refrescar token")
+            return True
+        return False
+    
+    @classmethod
+    def _refresh_token(cls):
+        """
+        Refresca el token de acceso usando el refresh token almacenado.
+        
+        Returns:
+            bool: True si el refresh fue exitoso, False en caso contrario.
+        """
+        try:
+            if 'refresh_token' not in session:
+                logger.error("No hay refresh token disponible para refrescar la sesión")
+                return False
+                
+            refresh_token = session['refresh_token']
+            
+            # Intentar refrescar la sesión usando la API de Supabase
+            refresh_response = db.client.auth.refresh_session(refresh_token)
+            
+            if refresh_response and hasattr(refresh_response, 'session'):
+                # Guardar los nuevos tokens
+                session['access_token'] = refresh_response.session.access_token
+                if refresh_response.session.refresh_token:
+                    session['refresh_token'] = refresh_response.session.refresh_token
+                    
+                logger.info("Token refrescado exitosamente")
+                return True
+            else:
+                logger.error("No se pudo refrescar el token: respuesta inválida")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error al refrescar token: {str(e)}")
+            return False
+    
+    @classmethod
     def _get_auth_token(cls):
         """
         Única función para obtener tokens - elimina redundancias
         Orden de prioridad: session → g.user → None
+        Intenta refrescar el token si es necesario.
         """
+        # Verificar si necesitamos refrescar el token
+        if cls._should_refresh_token():
+            # Intentar refrescar el token
+            cls._refresh_token()
+            
         # 1. Session (prioridad máxima)
         if 'access_token' in session:
             return session['access_token']

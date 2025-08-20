@@ -70,7 +70,7 @@ from botanical_chart import botanical_bp
 from supabase_client_routes import supabase_bp
 from searcher_routes import search_bp, search_web_bp
 from data_tables_routes import data_tables_bp
-from lotes_routes import lotes_api_bp, lotes_web_bp
+from lotes_routes import lotes_api_bp, lotes_web_bp, lotes_debug_bp
 from web_routes import web_bp
 from profile_routes import profile_bp
 
@@ -84,6 +84,7 @@ app.register_blueprint(search_web_bp)
 app.register_blueprint(data_tables_bp)
 app.register_blueprint(lotes_api_bp)
 app.register_blueprint(lotes_web_bp)
+app.register_blueprint(lotes_debug_bp)
 app.register_blueprint(profile_bp)
 app.register_blueprint(edit_bp)
 

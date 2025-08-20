@@ -45,12 +45,21 @@
             <!-- Right Column - Botanical Chart -->
             <div class="w-full md:w-1/2 aspect-square bg-white bg-opacity-20 rounded-lg p-6">
                 <div id="botanical-chart-container" 
-                     class="h-full"
+                     class="h-full flex flex-col"
                      data-comuna="{{ contact_info.comuna if contact_info and contact_info.comuna else 'None' }}">
-                    <div class="flex items-center justify-center h-full">
+                    <div class="flex-1 flex items-center justify-center">
                         <div class="text-center">
                             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400 mx-auto mb-2"></div>
                             <p class="text-white opacity-70">Cargando gráfico botánico...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Carrusel de Lotes integrado -->
+                    <div id="lotes-carousel-container" class="mt-4 bg-white bg-opacity-90 rounded-lg p-4" data-user-id="{{ user.id if user else 'None' }}">
+                        <h3 class="text-lg font-bold text-gray-800 mb-3">Mis Lotes</h3>
+                        <div id="lotes-carousel" class="flex overflow-x-auto space-x-2 py-2">
+                            <!-- Los botones de los lotes se insertarán aquí dinámicamente -->
+                            <p class="text-gray-500 col-span-full text-sm">Cargando lotes...</p>
                         </div>
                     </div>
                 </div>
@@ -321,36 +330,13 @@
         
         <!-- Barra separadora para botones futuros -->
         <div class=" w-full mt-8 pt-4 border-t border-white border-opacity-30\></div>
- </div>
+    </div>
 </section>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// QR Download
-function downloadQR() {
-    const link = document.createElement('a');
-    link.href = '{{ qr_url or "" }}';
-    link.download = 'qr-{{ (user.nombre or "usuario").replace(" ", "_").lower() if user else "usuario" }}.png';
-    link.click();
-}
-
-// Share Profile
-function shareProfile() {
-    if (navigator.share) {
-        navigator.share({
-            title: '{{ (user.nombre or "Usuario") if user else "Usuario" }} - MeliAPP',
-            text: 'Conoce a {{ (user.nombre or "Usuario") if user else "Usuario" }} en MeliAPP',
-            url: window.location.href
-        });
-    } else {
-        // Fallback: copy to clipboard
-        navigator.clipboard.writeText(window.location.href).then(() => {
-            alert('Enlace copiado al portapapeles');
-        });
-    }
-}
-
 // Smooth scroll for internal links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
@@ -423,11 +409,13 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 });
             }
         }
+
     </script>
     
     <!-- Botanical Chart Integration -->
     <script src="{{ url_for('static', filename='js/botanical-chart.js') }}"></script>
     <script src="{{ url_for('static', filename='js/profile-integration.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/lotes-carousel.js') }}"></script>
 {% endblock %}
 
 

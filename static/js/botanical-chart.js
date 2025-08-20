@@ -104,11 +104,20 @@ class BotanicalChart {
         }
 
         console.log('🎯 Final HTML to be rendered:', html);
-        this.container.innerHTML = html;
+        
+        // Buscar el área específica del gráfico para preservar el carrusel
+        const chartArea = this.container.querySelector('.flex-1');
+        if (chartArea) {
+            // Solo reemplazar el área del gráfico, preservando el carrusel
+            chartArea.innerHTML = html;
+        } else {
+            // Fallback: reemplazar todo el contenido
+            this.container.innerHTML = html;
+        }
     }
 
     showMessage(message) {
-        this.container.innerHTML = `
+        const messageHtml = `
             <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md">
                 <div class="flex">
                     <div class="flex-shrink-0">
@@ -122,6 +131,14 @@ class BotanicalChart {
                 </div>
             </div>
         `;
+        
+        // Buscar el área específica del gráfico para preservar el carrusel
+        const chartArea = this.container.querySelector('.flex-1');
+        if (chartArea) {
+            chartArea.innerHTML = messageHtml;
+        } else {
+            this.container.innerHTML = messageHtml;
+        }
     }
 
     // Método para actualizar automáticamente cuando cambia la comuna

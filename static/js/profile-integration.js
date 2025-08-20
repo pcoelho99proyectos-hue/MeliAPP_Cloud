@@ -4,50 +4,46 @@
 
 function initBotanicalChart() {
     const container = document.getElementById('botanical-chart-container');
-    
     if (!container) {
-        container.innerHTML = '<div class="text-red-500">Error: Container no encontrado</div>';
+        console.error('Error: Container #botanical-chart-container no encontrado');
         return;
     }
-    
-    // Obtener comuna del usuario
+
+    const chartArea = container.querySelector('.flex-1');
+    if (!chartArea) {
+        console.error('Error: Chart area .flex-1 no encontrada dentro del container.');
+        // No usamos innerHTML en el container para no borrar el carrusel
+        return;
+    }
+
     const userComuna = container.dataset.comuna;
-    
-    // Mostrar debugging visible dentro del contenedor
-    container.innerHTML = `
-        <div class="p-4 text-sm">
-            <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-2">
-                <strong>Debug:</strong> Comuna detectada = <span class="font-mono">${userComuna}</span>
-            </div>
-            <div class="bg-green-50 border border-green-200 rounded p-3">
-                <strong>Estado:</strong> Inicializando gráfico...
-            </div>
-        </div>
-    `;
-    
-    if (!userComuna || userComuna === 'None' || userComuna === '') {
-        container.innerHTML = `
+
+    const showMessage = (message, iconClass = '', isError = false) => {
+        const textColor = isError ? 'text-red-300' : 'text-slate-600';
+        chartArea.innerHTML = `
             <div class="flex items-center justify-center h-full">
-                <div class="text-center text-slate-600">
-                    <i class="fas fa-map-marker-alt text-2xl mb-2"></i>
-                    <p class="font-medium">Sin información de comuna</p>
-                    <p class="text-sm text-slate-500">Comuna: ${userComuna || 'vacía'}</p>
+                <div class="text-center ${textColor}">
+                    ${iconClass ? `<i class="${iconClass} text-2xl mb-2"></i>` : ''}
+                    ${message}
                 </div>
             </div>
         `;
+    };
+
+    if (!userComuna || userComuna === 'None' || userComuna === '') {
+        showMessage('<p class="font-medium">Sin información de comuna</p><p class="text-sm text-slate-500">Actualiza tu perfil para ver el gráfico.</p>', 'fas fa-map-marker-alt');
         return;
     }
-    
-    // Inicializar gráfico con la comuna detectada
+
     try {
         const chart = new BotanicalChart('botanical-chart-container');
         
         // Mostrar estado de carga
-        container.innerHTML = `
+        chartArea.innerHTML = `
             <div class="flex items-center justify-center h-full">
                 <div class="text-center">
                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400 mx-auto mb-2"></div>
-                    <p class="text-slate-600">Cargando datos botánicos para ${userComuna}...</p>
+                    <p class="text-white opacity-80">Cargando datos para ${userComuna}...</p>
                 </div>
             </div>
         `;
@@ -55,14 +51,8 @@ function initBotanicalChart() {
         chart.loadData(userComuna);
         
     } catch (error) {
-        container.innerHTML = `
-            <div class="bg-red-50 border border-red-200 rounded p-4">
-                <div class="text-red-600">
-                    <strong>Error al cargar gráfico:</strong><br>
-                    ${error.message}
-                </div>
-            </div>
-        `;
+        console.error("Error al inicializar BotanicalChart:", error);
+        showMessage(`<p class="font-medium">Error al cargar el gráfico</p><p class="text-sm">${error.message}</p>`, 'fas fa-exclamation-triangle', true);
     }
 }
 

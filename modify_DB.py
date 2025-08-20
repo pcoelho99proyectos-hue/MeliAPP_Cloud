@@ -6,6 +6,7 @@ Permite actualizar cualquier tabla/campo desde formularios JSON con manejo de RL
 import logging
 from typing import Dict, Any, Optional, Tuple
 import json
+from datetime import datetime
 from gmaps_utils import process_ubicacion_data
 from auth_manager import AuthManager
 
@@ -289,36 +290,41 @@ class DatabaseModifier:
             logger.error(f"Traceback: {traceback.format_exc()}")
             return {"success": False, "error": str(e)}, 500
     
-    def insert_record(self, table, data, user_uuid=None):
-        """Insertar un nuevo registro en cualquier tabla"""
+    def insert_record(self, table: str, data: Dict[str, Any], user_uuid: Optional[str] = None) -> Tuple[Dict[str, Any], int]:
+        """Inserta un nuevo registro, asegurando que auth_user_id esté presente."""
         try:
             auth_client = self.get_authenticated_client()
             if not auth_client:
                 return {"success": False, "error": "Error de autenticación"}, 401
+
+            # Asegurar que auth_user_id esté en los datos para RLS
+            if user_uuid and 'auth_user_id' not in data:
+                data['auth_user_id'] = user_uuid
             
-            # Agregar usuario_id si se proporciona
-            if user_uuid and 'usuario_id' not in data:
-                data['usuario_id'] = user_uuid
-            
-            # Agregar timestamps
-            data['created_at'] = datetime.utcnow().isoformat()
-            data['updated_at'] = datetime.utcnow().isoformat()
-            
-            logger.info(f"Insertando en {table}: {data}")
+            if 'auth_user_id' not in data or not data['auth_user_id']:
+                return {"success": False, "error": "El ID de usuario (auth_user_id) es requerido para la inserción."}, 400
+
+            logger.info(f"Insertando en {table}: {json.dumps(data, ensure_ascii=False)}")
             insert_result = auth_client.table(table).insert(data).execute()
-            
-            if not insert_result.data or len(insert_result.data) == 0:
+
+            # Manejo de errores de la API de Supabase
+            if hasattr(insert_result, 'error') and insert_result.error:
+                logger.error(f"Error de Supabase al insertar: {insert_result.error.message}")
+                return {"success": False, "error": insert_result.error.message}, 500
+
+            if not insert_result.data:
+                logger.error("La inserción no devolvió datos.")
                 return {"success": False, "error": "No se pudo insertar el registro"}, 500
-            
+
             return {
                 "success": True,
                 "message": f"Registro insertado en {table} correctamente",
                 "data": insert_result.data[0]
-            }, 200
-            
+            }, 201
+
         except Exception as e:
-            logger.error(f"Error insertando en {table}: {e}")
-            return {"success": False, "error": str(e)}, 500
+            logger.error(f"Excepción al insertar en {table}: {e}", exc_info=True)
+            return {"success": False, "error": "Ocurrió un error inesperado en el servidor."}, 500
     
     def get_record(self, table, user_uuid, select_fields='*'):
         """Obtener un registro de cualquier tabla"""
@@ -355,34 +361,71 @@ class DatabaseModifier:
     def delete_record(self, table, user_uuid, extra_conditions=None):
         """Eliminar un registro de cualquier tabla"""
         try:
+            logger.info(f"=== INICIO ELIMINAR REGISTRO EN {table} ====")
+            logger.info(f"Usuario UUID: {user_uuid}")
+            logger.info(f"Condiciones extra: {extra_conditions}")
+            
             auth_client = self.get_authenticated_client()
             if not auth_client:
+                logger.error("No se pudo obtener cliente autenticado")
                 return {"success": False, "error": "Error de autenticación"}, 401
             
-            # Determinar campo de referencia
-            if table == 'usuarios':
-                auth_user_id = self.get_auth_user_id(auth_client, user_uuid)
-                if not auth_user_id:
-                    return {"success": False, "error": "Usuario no encontrado"}, 404
-                ref_field = 'auth_user_id'
-                ref_value = auth_user_id
-            else:
-                ref_field = 'usuario_id'
-                ref_value = user_uuid
+            logger.info("Cliente autenticado obtenido correctamente")
             
-            query = auth_client.table(table).delete().eq(ref_field, ref_value)
+            # TODAS las tablas usan auth_user_id como referencia principal según la migración realizada
+            ref_field = 'auth_user_id'
+            ref_value = user_uuid
             
-            # Agregar condiciones adicionales si existen
+            # Verificar que el registro existe antes de intentar eliminarlo
+            verify_query = auth_client.table(table).select('id')
+            
+            # Aplicar filtro principal por auth_user_id
+            verify_query = verify_query.eq(ref_field, ref_value)
+            
+            # Aplicar condiciones adicionales si existen
             if extra_conditions:
                 for field, value in extra_conditions.items():
-                    query = query.eq(field, value)
+                    verify_query = verify_query.eq(field, value)
+                    
+            verify_result = verify_query.execute()
+            logger.info(f"Resultado de verificación: {verify_result.data}")
             
-            delete_result = query.execute()
+            if not verify_result.data:
+                logger.error(f"No se encontró el registro a eliminar en {table} (auth_user_id: {ref_value})")
+                return {"success": False, "error": f"Registro no encontrado en {table}"}, 404
+            
+            logger.info(f"Registro encontrado, procediendo a eliminar ID: {verify_result.data[0]['id']}")
+            
+            # Construir query de eliminación
+            # IMPORTANTE: Para eliminar un lote específico, usamos directamente su ID
+            if table == 'origenes_botanicos' and extra_conditions and 'id' in extra_conditions:
+                logger.info(f"Eliminando lote por ID directo: {extra_conditions['id']}")
+                delete_result = auth_client.table(table).delete().eq('id', extra_conditions['id']).execute()
+            else:
+                # Construir query normal
+                query = auth_client.table(table).delete().eq(ref_field, ref_value)
+                
+                # Agregar condiciones adicionales si existen
+                if extra_conditions:
+                    for field, value in extra_conditions.items():
+                        query = query.eq(field, value)
+                
+                delete_result = query.execute()
+            
+            logger.info(f"Resultado de eliminación: {delete_result.data if hasattr(delete_result, 'data') else 'Sin datos'}")
+            
+            if hasattr(delete_result, 'error') and delete_result.error:
+                logger.error(f"Error en la eliminación: {delete_result.error}")
+                return {"success": False, "error": f"Error al eliminar: {delete_result.error}"}, 500
+            
+            deleted_count = len(delete_result.data) if delete_result.data else 0
+            logger.info(f"Registros eliminados: {deleted_count}")
+            logger.info(f"=== FIN ELIMINAR REGISTRO EN {table} ====")
             
             return {
                 "success": True,
                 "message": f"Registro eliminado de {table} correctamente",
-                "deleted_count": len(delete_result.data) if delete_result.data else 0
+                "deleted_count": deleted_count
             }, 200
             
         except Exception as e:
