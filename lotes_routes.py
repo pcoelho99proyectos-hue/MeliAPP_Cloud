@@ -112,17 +112,22 @@ def obtener_composicion_lote(lote_id):
                 'composicion': _composition_cache[lote_id]
             })
         
-        # Usar cliente autenticado singleton para evitar múltiples autenticaciones
-        auth_client = get_singleton_authenticated_client()
-        
-        if not auth_client:
-            logger.error("No se pudo obtener cliente autenticado para obtener composición")
-            return jsonify({
-                'success': False,
-                'error': 'Error de autenticación'
-            }), 401
+        # Usar cliente normal para hacer la composición pública (sin autenticación requerida)
+        try:
+            response = db_client.client.table('origenes_botanicos').select('composicion').eq('id', lote_id).execute()
+        except Exception as e:
+            # Si falla con cliente normal, intentar con cliente autenticado como fallback
+            logger.warning(f"Fallback a cliente autenticado para lote {lote_id}: {str(e)}")
+            auth_client = get_singleton_authenticated_client()
             
-        response = auth_client.table('origenes_botanicos').select('composicion').eq('id', lote_id).execute()
+            if not auth_client:
+                logger.error("No se pudo obtener cliente autenticado para obtener composición")
+                return jsonify({
+                    'success': False,
+                    'error': 'Error de autenticación'
+                }), 401
+                
+            response = auth_client.table('origenes_botanicos').select('composicion').eq('id', lote_id).execute()
         
         if response.data and len(response.data) > 0:
             composicion = response.data[0].get('composicion')
@@ -209,19 +214,28 @@ def eliminar_lote_route(lote_id):
 @lotes_api_bp.route('/lotes/<usuario_id>', methods=['GET'])
 def obtener_lotes_usuario(usuario_id):
     """
-    Endpoint para obtener todos los lotes de un usuario.
+    Endpoint público para obtener todos los lotes de un usuario.
+    No requiere autenticación para permitir acceso público a perfiles.
     
     GET /api/lotes/<usuario_id>
     """
-    logger.info(f"📦 Obteniendo lotes para usuario: {usuario_id}")
+    logger.info(f"📦 Obteniendo lotes para usuario (público): {usuario_id}")
     
     try:
-        lotes = lotes_manager.obtener_lotes_usuario(usuario_id)
-        logger.info(f"📊 Lotes encontrados: {len(lotes)}")
+        # Usar cliente normal primero para acceso público
+        try:
+            response = db_client.client.table('origenes_botanicos').select('*').eq('auth_user_id', usuario_id).order('orden_miel').execute()
+            lotes = response.data if response.data else []
+        except Exception as e:
+            # Fallback a lotes_manager si el cliente normal falla
+            logger.warning(f"Fallback a lotes_manager para usuario {usuario_id}: {str(e)}")
+            lotes = lotes_manager.obtener_lotes_usuario(usuario_id)
+        
+        logger.info(f"📊 Lotes encontrados (público): {len(lotes)}")
         return jsonify({"success": True, "lotes": lotes})
         
     except Exception as e:
-        logger.error(f"❌ Error al obtener lotes: {e}")
+        logger.error(f"❌ Error al obtener lotes públicos: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
