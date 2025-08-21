@@ -15,9 +15,21 @@ logging.getLogger('hpack').setLevel(logging.WARNING)
 logging.getLogger('httpcore').setLevel(logging.WARNING)
 logging.getLogger('httpx').setLevel(logging.WARNING)
 
-# Configuración de logging
-logging.basicConfig(level=logging.DEBUG)
+# Configuración de logging detallado para debug
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('meliapp_debug.log', encoding='utf-8')
+    ]
+)
 logger = logging.getLogger(__name__)
+
+# Habilitar logs específicos para auth y registro
+logging.getLogger('auth_manager').setLevel(logging.DEBUG)
+logging.getLogger('auth_manager_routes').setLevel(logging.DEBUG)
+logging.getLogger('modify_DB').setLevel(logging.DEBUG)
 
 # Configuración de la aplicación
 app = Flask(__name__)
@@ -33,8 +45,13 @@ app.config.update(
 )
 
 # Configuración
-DEBUG = False  # Siempre False para producción
+DEBUG = True  # Habilitado para debug del registro
 PORT = int(os.environ.get('PORT', 3000))
+
+# Log de inicio
+logger.info("=== INICIANDO MELIAPP v3 CON DEBUG HABILITADO ===")
+logger.info(f"Puerto configurado: {PORT}")
+logger.info(f"Debug mode: {DEBUG}")
 
 # Configuración para producción
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False

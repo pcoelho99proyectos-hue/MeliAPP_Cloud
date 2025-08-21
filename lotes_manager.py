@@ -35,6 +35,7 @@ class LotesManager:
             # Realizar la consulta con el cliente autenticado
             response = auth_client.table('origenes_botanicos').select('*').eq('auth_user_id', usuario_id).order('orden_miel').execute()
             
+            logger.info(f"Consulta de lotes: {len(response.data) if response.data else 0} registros encontrados")
             return response.data if response.data else []
             
         except Exception as e:

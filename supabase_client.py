@@ -198,3 +198,25 @@ class SupabaseClient:
 
 # Instancia global
 db = SupabaseClient()
+
+def get_service_client():
+    """
+    Crea un cliente de Supabase con service role key para operaciones privilegiadas.
+    Usado para bypasear RLS durante la inicialización de usuarios.
+    """
+    load_dotenv(".env")
+    
+    url = os.getenv('SUPABASE_URL')
+    service_key = os.getenv('SUPABASE_SERVICE_KEY')
+    
+    if not url or not service_key:
+        print("❌ Error: SUPABASE_URL y SUPABASE_SERVICE_KEY deben estar configurados")
+        return None
+    
+    try:
+        service_client = create_client(url, service_key)
+        print("✅ Service client creado exitosamente")
+        return service_client
+    except Exception as e:
+        print(f"❌ Error creando service client: {e}")
+        return None
