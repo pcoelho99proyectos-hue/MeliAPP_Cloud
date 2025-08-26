@@ -544,11 +544,26 @@ class Searcher:
             # 1. Llamar a la función RPC segura para obtener datos de perfil (usuario, contacto, ubicaciones)
             profile_response = self.supabase.rpc('get_user_profile', {'p_auth_user_id': auth_user_id}).execute()
             
-            if not profile_response.data:
+            # La función RPC devuelve un diccionario, no una lista, por eso falla la validación
+            # Accedemos directamente al resultado sin usar .data
+            if hasattr(profile_response, 'data') and profile_response.data:
+                profile_data = profile_response.data
+            else:
+                # Si hay error de validación, intentamos acceder al resultado directamente
+                try:
+                    # Hacer la llamada RPC de forma más directa
+                    rpc_result = self.supabase.rpc('get_user_profile', {'p_auth_user_id': auth_user_id})
+                    # Ejecutar y manejar la respuesta manualmente
+                    response = rpc_result.execute()
+                    profile_data = response.data if hasattr(response, 'data') else response
+                except Exception as rpc_error:
+                    logger.error(f"Error en RPC directo: {str(rpc_error)}")
+                    # Fallback: obtener datos usando consultas individuales
+                    return self._get_profile_fallback(auth_user_id)
+            
+            if not profile_data:
                 logger.warning(f"No se encontró perfil para el usuario {auth_user_id} usando RPC.")
                 return None
-
-            profile_data = profile_response.data
             
             # 2. Obtener datos adicionales que SÍ deben respetar RLS (producción, solicitudes)
             #    Estas consultas solo funcionarán si el usuario autenticado es el dueño de los datos.
@@ -566,5 +581,43 @@ class Searcher:
             }
             
         except Exception as e:
-            logger.error(f"Error al obtener datos del perfil con RPC para {auth_user_id}: {str(e)}", exc_info=True)
+            logger.error(f"Error al obtener datos del perfil con RPC para {auth_user_id}: {str(e)}")
+            # Fallback: obtener datos usando consultas individuales
+            return self._get_profile_fallback(auth_user_id)
+
+    def _get_profile_fallback(self, auth_user_id):
+        """
+        Método fallback para obtener datos del perfil usando consultas individuales
+        cuando la función RPC falla.
+        """
+        try:
+            logger.info(f"Usando método fallback para obtener perfil de {auth_user_id}")
+            
+            # Obtener datos del usuario
+            user_response = self.supabase.table('usuarios').select('*').eq('auth_user_id', auth_user_id).execute()
+            user_data = user_response.data[0] if user_response.data else None
+            
+            # Obtener información de contacto
+            contact_response = self.supabase.table('info_contacto').select('*').eq('auth_user_id', auth_user_id).execute()
+            contact_data = contact_response.data[0] if contact_response.data else None
+            
+            # Obtener ubicaciones
+            locations_response = self.supabase.table('ubicaciones').select('*').eq('auth_user_id', auth_user_id).execute()
+            locations_data = locations_response.data if locations_response.data else []
+            
+            # Obtener datos adicionales
+            producciones_response = self.supabase.table('origenes_botanicos').select('*').eq('auth_user_id', auth_user_id).execute()
+            solicitudes_response = self.supabase.table('solicitudes_apicultor').select('*').eq('auth_user_id', auth_user_id).execute()
+            
+            return {
+                'user': user_data,
+                'contact_info': contact_data,
+                'locations': locations_data,
+                'production': producciones_response.data if producciones_response.data else [],
+                'botanical_origins': producciones_response.data if producciones_response.data else [],
+                'requests': solicitudes_response.data if solicitudes_response.data else []
+            }
+            
+        except Exception as fallback_error:
+            logger.error(f"Error en método fallback para {auth_user_id}: {str(fallback_error)}")
             return None
