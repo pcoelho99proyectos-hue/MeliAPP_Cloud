@@ -124,54 +124,57 @@ class GoogleOAuth:
             }
     
     def _create_or_update_user(self, user):
-        """Crea o actualiza usuario usando cliente autenticado"""
+        """Método único y corregido: Crea o actualiza usuario usando el cliente de Supabase"""
         try:
-            # Crear cliente autenticado con el token del usuario
-            from supabase import create_client
-            import os
+            auth_user_id = str(user.id)
             
-            # Obtener el cliente con el token de autenticación actual
-            auth_client = create_client(
-                os.getenv('SUPABASE_URL'),
-                os.getenv('SUPABASE_KEY')
-            )
+            # Buscar usuario existente usando el cliente de db
+            user_check = db.client.table('usuarios')\
+                .select('auth_user_id')\
+                .eq('auth_user_id', auth_user_id)\
+                .maybe_single()\
+                .execute()
             
-            # Buscar usuario existente por auth_user_id (PRIMARY KEY)
-            user_check = auth_client.table('usuarios').select('auth_user_id').eq('auth_user_id', user.id).execute()
-            
-            if user_check.data and len(user_check.data) > 0:
-                # Usuario existente
-                auth_user_id = user_check.data[0]['auth_user_id']
+            if user_check.data:
                 logger.info(f"Usuario existente encontrado: {user.email} (auth_user_id: {auth_user_id})")
                 return auth_user_id
             
-            # Crear nuevo usuario con datos seguros
+            # Crear nuevo usuario con datos mínimos para evitar RLS
             new_user = {
-                'username': user.email,
-                'auth_user_id': user.id,
+                'auth_user_id': auth_user_id,
+                'username': user.email.split('@')[0],  # Usar parte del email como username
                 'tipo_usuario': 'apicultor',
-                'role': 'Apicultor',
-                'status': 'active',
-                'activo': True
+                'role': 'user',
+                'status': 'activo',
+                'activo': True,
+                'fecha_registro': 'now()',
+                'last_login': 'now()'
             }
             
-            # Usar el cliente autenticado para insertar
-            insert_result = auth_client.table('usuarios').insert(new_user).execute()
+            # Usar cliente de db para insertar
+            insert_result = db.client.table('usuarios').insert(new_user).execute()
             
             if insert_result.data and len(insert_result.data) > 0:
-                auth_user_id = insert_result.data[0]['auth_user_id']
                 logger.info(f"Usuario creado exitosamente: {user.email} (auth_user_id: {auth_user_id})")
                 
-                # Crear info de contacto
-                self._create_contact_info_with_client(auth_client, auth_user_id, user)
+                # Crear info de contacto básica
+                try:
+                    db.client.table('info_contacto').insert({
+                        'auth_user_id': auth_user_id,
+                        'email': user.email,
+                        'nombre_completo': user.user_metadata.get('full_name', '')
+                    }).execute()
+                except Exception as e:
+                    logger.warning(f"Error creando info_contacto: {e}")
+                
                 return auth_user_id
             else:
-                logger.error("No se pudo crear el usuario - sin datos")
-                return str(user.id)  # Fallback
+                logger.error("No se pudo crear el usuario")
+                return auth_user_id  # Fallback con auth_user_id
                 
         except Exception as e:
             logger.error(f"Error en _create_or_update_user: {str(e)}")
-            # Fallback: retornar el auth_user_id
+            # Siempre retornar auth_user_id para mantener consistencia
             return str(user.id)
     
     def _create_contact_info(self, auth_user_id, user):

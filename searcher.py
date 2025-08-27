@@ -19,12 +19,11 @@ class Searcher:
         """Inicializa el Searcher con el cliente de Supabase."""
         self.supabase = supabase_client
         self.search_fields = {
-            'usuarios': ['id', 'nombre', 'apellido', 'telefono'],
-            'info_contacto': ['id', 'correo_personal', 'telefono', 'direccion'],
-            'pedidos': ['id', 'usuario_id', 'numero_pedido', 'estado'],
-            'ubicaciones': ['id', 'usuario_id', 'nombre', 'descripcion', 'norma_geo'],
-            'origenes_botanicos': ['id', 'produccion_id', 'descripcion_flora', 'sector_actividad', 'detalles_transhumancia', 'caracteristicas_organicas'],
-            'solicitudes_apicultor': ['id', 'usuario_id', 'nombre_completo', 'nombre_empresa', 'region', 'comuna', 'telefono', 'status']
+            'usuarios': ['auth_user_id', 'username', 'tipo_usuario', 'role', 'status'],
+            'info_contacto': ['auth_user_id', 'email', 'nombre_completo', 'telefono', 'direccion'],
+            'ubicaciones': ['auth_user_id', 'nombre', 'descripcion', 'norma_geo'],
+            'origenes_botanicos': ['auth_user_id', 'descripcion_flora', 'sector_actividad', 'detalles_transhumancia', 'caracteristicas_organicas'],
+            'solicitudes_apicultor': ['auth_user_id', 'nombre_completo', 'nombre_empresa', 'region', 'comuna', 'telefono', 'status']
         }
         
     def get_uuid_segment(self, uuid_str: str) -> str:
@@ -96,7 +95,7 @@ class Searcher:
     
     def get_user_id_by_auth_id(self, auth_user_id: str) -> Optional[str]:
         """
-        Obtiene el auth_user_id del usuario (que ahora es la PRIMARY KEY).
+        Método único: Obtiene el auth_user_id del usuario (ahora es la PRIMARY KEY).
         
         Args:
             auth_user_id: ID del usuario desde la autenticación (Supabase Auth)
@@ -104,13 +103,21 @@ class Searcher:
         Returns:
             str: auth_user_id si el usuario existe o None si no se encuentra
         """
+        if not auth_user_id:
+            return None
+            
         try:
-            response = self.supabase.table('usuarios').select('auth_user_id').eq('auth_user_id', auth_user_id).maybe_single().execute()
-            if hasattr(response, 'data') and response.data:
-                return response.data['auth_user_id']
+            response = self.supabase.table('usuarios')\
+                .select('auth_user_id')\
+                .eq('auth_user_id', auth_user_id)\
+                .maybe_single()\
+                .execute()
+            
+            return response.data.get('auth_user_id') if response.data else None
+            
         except Exception as e:
-            print(f"Error al buscar usuario por auth_user_id {auth_user_id}: {str(e)}")
-        return None
+            logger.error(f"Error al buscar usuario por auth_user_id {auth_user_id}: {str(e)}")
+            return None
 
     def get_tables(self) -> List[str]:
         """
@@ -238,136 +245,63 @@ class Searcher:
             
         return results
 
-    async def find_user_by_id(self, auth_user_id: str) -> Optional[Dict[str, Any]]:
+    def search_in_table(self, table: str, term: str, limit: int = 10) -> List[Dict[str, Any]]:
         """
-        Busca un usuario por su auth_user_id en la tabla de usuarios.
-        
+        Busca un término en todos los campos de búsqueda de una tabla específica.
+            
         Args:
-            auth_user_id: auth_user_id del usuario a buscar
-            
-        Returns:
-            Diccionario con los datos del usuario o None si no se encuentra
-        """
-        try:
-            response = self.supabase.table('usuarios').select('*').eq('auth_user_id', auth_user_id).execute()
-            if hasattr(response, 'data') and response.data:
-                return response.data[0]
-        except Exception as e:
-            print(f"Error al buscar usuario por auth_user_id {auth_user_id}: {str(e)}")
-            
-        return None
-
-    async def find_contact_by_user_id(self, auth_user_id: str) -> Optional[Dict[str, Any]]:
-        """
-        Busca la información de contacto de un usuario por su auth_user_id.
-        
-        Args:
-            auth_user_id: auth_user_id del usuario
-            
-        Returns:
-            Diccionario con la información de contacto o None si no se encuentra
-        """
-        try:
-            response = self.supabase.table('info_contacto').select('*').eq('auth_user_id', auth_user_id).execute()
-            if hasattr(response, 'data') and response.data:
-                return response.data[0]
-        except Exception as e:
-            print(f"Error al buscar contacto para usuario {auth_user_id}: {str(e)}")
-            
-        return None
-
-    async def autocomplete(self, term: str, limit: int = 5) -> List[Dict[str, str]]:
-        """
-        Busca sugerencias de autocompletado en todos los campos relevantes.
-        Devuelve una lista de sugerencias con el formato:
-        [{"value": "valor", "label": "Etiqueta descriptiva"}, ...]
-        """
-        suggestions = []
-        try:
-            # Buscar en la tabla de usuarios
-            users = self.search_in_table('usuarios', term, limit)
-            for user in users:
-                name = user.get('nombre', '')
-                last_name = user.get('apellido', '')
-                email = user.get('correo_personal', '')
+            table: Nombre de la tabla donde buscar
+            term: Término de búsqueda
+            limit: Límite de resultados a devolver
                 
-                if name and last_name:
-                    suggestions.append({
-                        'value': user['id'],
-                        'label': f"{name} {last_name} ({email})"
-                    })
-                elif email:
-                    suggestions.append({
-                        'value': user['id'],
-                        'label': email
-                    })
-                
-                if len(suggestions) >= limit:
-                    break
-                    
-            # Si no hay suficientes resultados, buscar en info_contacto
-            if len(suggestions) < limit:
-                contacts = self.search_in_table('info_contacto', term, limit - len(suggestions))
-                for contact in contacts:
-                    email = contact.get('correo_personal', '')
-                    phone = contact.get('telefono', '')
-                    user_id = contact.get('usuario_id', '')
-                    
-                    if email and not any(s['value'] == user_id for s in suggestions):
-                        suggestions.append({
-                            'value': user_id,
-                            'label': f"Contacto: {email} {f'({phone})' if phone else ''}"
-                        })
-                    
-                    if len(suggestions) >= limit:
-                        break
-            
-            return suggestions[:limit]
-            
-        except Exception as e:
-            print(f"Error en autocompletar: {str(e)}")
-            return []
-            
-    async def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
-        """
-        Busca un usuario por su ID y devuelve sus datos junto con la información de contacto.
-        
         Returns:
-            Diccionario con la estructura {
-                'user': {datos_usuario},
-                'contact': {datos_contacto} o None si no existe
-            } o None si no se encuentra el usuario
+            Lista de diccionarios con los resultados de la búsqueda
         """
+        results = []
         try:
-            # Buscar usuario
-            user = await self.find_user_by_id(user_id)
-            if not user:
-                return None
+            # Obtener campos de búsqueda para esta tabla
+            # 1. Usar campos predefinidos si existen
+            if table in self.search_fields:
+                fields = self.search_fields[table]
+            else:
+                # 2. Intentar obtener los campos de la tabla
+                try:
+                    result = self.supabase.table(table).select('*').limit(1).execute()
+                    if hasattr(result, 'data') and result.data:
+                        fields = list(result.data[0].keys())
+                    else:
+                        # 3. Usar campos comunes como último recurso
+                        fields = ['auth_user_id', 'username', 'email', 'descripcion']
+                except Exception as e:
+                    print(f"Error al obtener campos para la tabla {table}: {str(e)}")
+                    fields = ['auth_user_id', 'username', 'email', 'descripcion']
+                    
+            if not fields:
+                print(f"No se encontraron campos de búsqueda para la tabla {table}")
+                return results
+                    
+            # Buscar en cada campo individualmente y combinar resultados
+            seen_ids = set()
+            unique_results = []
+            
+            for field in fields:
+                try:
+                    field_query = self.supabase.table(table).select('*').ilike(field, f'%{term}%').limit(limit)
+                    field_response = field_query.execute()
+                    if hasattr(field_response, 'data') and field_response.data:
+                        for item in field_response.data:
+                            item_id = item.get('auth_user_id') or item.get('id')
+                            if item_id and item_id not in seen_ids:
+                                unique_results.append(item)
+                                seen_ids.add(item_id)
+                except Exception as e:
+                    print(f"Error buscando en campo {field}: {str(e)}")
+                    continue
+                    
+            return unique_results[:limit]
                 
-            # Buscar información de contacto
-            contact = await self.find_contact_by_user_id(user_id)
-            
-            return {
-                'user': user,
-                'contact': contact
-            }
-            
         except Exception as e:
-            print(f"Error al buscar usuario por ID: {str(e)}")
-            return None
-
-    def obtener_esquema_tabla(self, tabla: str) -> List[Dict]:
-        """Obtiene el esquema de una tabla específica."""
-        try:
-            # Usar el método table() para obtener información de la tabla
-            response = self.supabase.table('information_schema.columns').select('*').eq('table_name', tabla).execute()
-            return [{
-                'column_name': col['column_name'],
-                'data_type': col['data_type'],
-                'is_nullable': col['is_nullable']
-            } for col in response.data] if response.data else []
-        except Exception as e:
-            print(f"Error al obtener esquema de {tabla}: {str(e)}")
+            print(f"Error al buscar en la tabla {table}: {str(e)}")
             return []
 
     def buscar_en_tabla(
