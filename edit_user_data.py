@@ -232,60 +232,6 @@ def get_usuario_data():
         logger.error(f"Error obteniendo datos de usuario: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
-@edit_bp.route('/api/data/ubicaciones', methods=['GET'])
-@AuthManager.login_required
-def get_ubicaciones_data():
-    """Obtener ubicaciones del usuario autenticado"""
-    try:
-        user_uuid = g.user.get('id')
-        if not user_uuid:
-            return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
-        
-        # Obtener ubicaciones
-        supabase = SupabaseClient()
-        ubicaciones_response = supabase.client.table('ubicaciones').select('*').eq('auth_user_id', user_uuid).execute()
-        ubicaciones = ubicaciones_response.data if ubicaciones_response.data else []
-        
-        return jsonify({
-            "success": True,
-            "ubicaciones": ubicaciones or []
-        })
-        
-    except Exception as e:
-        logger.error(f"Error obteniendo ubicaciones: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@edit_bp.route('/api/data/info_contacto', methods=['GET'])
-@AuthManager.login_required
-def get_info_contacto_data():
-    """Obtener datos de info_contacto del usuario autenticado"""
-    try:
-        user_uuid = g.user.get('id')
-        if not user_uuid:
-            return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
-        
-        # Obtener información de contacto y email del auth.users
-        supabase = SupabaseClient()
-        
-        # Obtener email del usuario autenticado desde g.user (ya disponible)
-        user_email = g.user.get('email')
-        
-        # Obtener info_contacto
-        info_contacto_response = supabase.client.table('info_contacto').select('*').eq('auth_user_id', user_uuid).single().execute()
-        info_contacto = info_contacto_response.data if info_contacto_response.data else {}
-        
-        # Agregar email al objeto info_contacto
-        if user_email:
-            info_contacto['correo_principal'] = user_email
-        
-        return jsonify({
-            "success": True,
-            "data": info_contacto or {}
-        })
-        
-    except Exception as e:
-        logger.error(f"Error obteniendo datos de info_contacto: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
 
 @edit_bp.route('/api/edit/info_contacto', methods=['POST'])
 @AuthManager.login_required

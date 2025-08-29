@@ -75,3 +75,21 @@ class QRGenerator:
         # Convertir a Base64
         png_data = qr.png_bytes(scale=scale)
         return f"data:image/png;base64,{base64.b64encode(png_data).decode()}"
+
+def generate_qr_code(url, scale=5, border=2, error_level='m'):
+    """
+    Genera un código QR para una URL específica usando segno.
+
+    Args:
+        url (str): La URL para la cual se generará el QR.
+        scale (int): Factor de escala para el tamaño del QR.
+        border (int): El ancho del borde del QR.
+        error_level (str): Nivel de corrección de errores ('l', 'm', 'q', 'h').
+
+    Returns:
+        Objeto de QR de segno.
+    """
+    # Generar el código QR con la configuración especificada
+    qr = segno.make(url, error=error_level)
+    # Se devuelve el objeto QR para que el llamador decida el formato (PNG, SVG, etc.)
+    return qr

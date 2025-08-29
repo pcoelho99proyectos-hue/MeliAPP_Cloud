@@ -42,8 +42,8 @@ function initBotanicalChart() {
         chartArea.innerHTML = `
             <div class="flex items-center justify-center h-full">
                 <div class="text-center">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400 mx-auto mb-2"></div>
-                    <p class="text-white opacity-80">Cargando datos para ${userComuna}...</p>
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                    <p class="text-gray-600">Cargando datos para ${userComuna}...</p>
                 </div>
             </div>
         `;

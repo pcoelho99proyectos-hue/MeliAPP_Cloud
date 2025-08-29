@@ -420,68 +420,66 @@ function showTab(tabName) {
     activeTab.classList.remove('border-transparent', 'text-gray-500');
     activeTab.classList.add('border-amber-500', 'text-amber-600');
     
-    // Load data for the selected tab, except for 'seguridad'
+    // Populate data for the selected tab from global state, except for 'seguridad'
     if (tabName !== 'seguridad') {
-        loadTabData(tabName);
+        populateTabData(tabName);
     }
 }
 
 // Load existing data for a tab
-async function loadTabData(tabName) {
+async function loadAllData() {
     try {
-        const response = await fetch(`/api/data/${tabName}`);
+        const response = await fetch('/api/data/usuarios');
         const result = await response.json();
-        
+
         if (result.success) {
-            // Obtener datos según el tipo de tab
-            let data;
-            if (tabName === 'usuarios') {
-                data = result.usuario || result.data || {};
-            } else if (tabName === 'info_contacto') {
-                data = result.info_contacto || result.data || {};
-            } else if (tabName === 'ubicaciones') {
-                data = result.ubicaciones || result.data || [];
-            } else {
-                data = result.data || {};
-            }
+            window.userData = {
+                usuario: result.usuario || {},
+                info_contacto: result.info_contacto || {},
+                ubicaciones: result.ubicaciones || [],
+                id: result.id
+            };
+            window.currentUserId = result.id;
+            console.log('Todos los datos del usuario cargados:', window.userData);
             
-            // Store user ID globally for profile navigation - usar UUID completo
-            if (tabName === 'usuarios' && data.auth_user_id) {
-                window.currentUserId = data.auth_user_id;
-                console.log('Usuario UUID completo cargado:', window.currentUserId);
-            } else if (result.id) {
-                // Fallback si viene en estructura diferente
-                window.currentUserId = result.id;
-                console.log('Usuario UUID completo cargado (fallback):', window.currentUserId);
-            }
-            
-            // Populate form fields based on tab
-            if (tabName === 'usuarios') {
-                // Precargar todos los campos de usuario
-                document.getElementById('usuarios-username-display').textContent = data.username || '';
-                document.getElementById('usuarios-tipo_usuario').value = data.tipo_usuario || '';
-                document.getElementById('usuarios-role').value = data.role || 'regular';
-            } else if (tabName === 'info_contacto') {
-                // Precargar todos los campos de información de contacto
-                document.getElementById('contacto-nombre_completo').value = data.nombre_completo || '';
-                document.getElementById('contacto-nombre_empresa').value = data.nombre_empresa || '';
-                
-                // Mostrar correo en campo de solo lectura - usar el email del backend que ya incluye auth.users
-                const userEmail = data.correo_principal || 'No disponible';
-                document.getElementById('contacto-correo_principal-display').textContent = userEmail;
-                document.getElementById('contacto-correo_principal').value = data.correo_principal || '';
-                
-                document.getElementById('contacto-direccion').value = data.direccion || '';
-                document.getElementById('contacto-comuna').value = data.comuna || '';
-                document.getElementById('contacto-region').value = data.region || '';
-                document.getElementById('contacto-telefono_principal').value = data.telefono_principal || '';
-            } else if (tabName === 'ubicaciones') {
-                // Display all locations - usar result.ubicaciones en lugar de data
-                displayUbicaciones(result.ubicaciones || []);
-            }
+            // Populate the initial tab
+            populateTabData('usuarios');
+        } else {
+            showToast('error', 'No se pudieron cargar los datos del perfil.');
         }
     } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error loading all user data:', error);
+        showToast('error', 'Error de red al cargar datos.');
+    }
+}
+
+function populateTabData(tabName) {
+    if (!window.userData) {
+        console.error('Los datos del usuario no están cargados.');
+        return;
+    }
+
+    if (tabName === 'usuarios') {
+        const data = window.userData.usuario;
+        document.getElementById('usuarios-username-display').textContent = data.username || '';
+        document.getElementById('usuarios-tipo_usuario').value = data.tipo_usuario || '';
+        document.getElementById('usuarios-role').value = data.role || 'regular';
+    } else if (tabName === 'info_contacto') {
+        const data = window.userData.info_contacto;
+        document.getElementById('contacto-nombre_completo').value = data.nombre_completo || '';
+        document.getElementById('contacto-nombre_empresa').value = data.nombre_empresa || '';
+        
+        const userEmail = data.correo_principal || 'No disponible';
+        document.getElementById('contacto-correo_principal-display').textContent = userEmail;
+        document.getElementById('contacto-correo_principal').value = data.correo_principal || '';
+        
+        document.getElementById('contacto-direccion').value = data.direccion || '';
+        document.getElementById('contacto-comuna').value = data.comuna || '';
+        document.getElementById('contacto-region').value = data.region || '';
+        document.getElementById('contacto-telefono_principal').value = data.telefono_principal || '';
+    } else if (tabName === 'ubicaciones') {
+        const ubicaciones = window.userData.ubicaciones;
+        displayUbicaciones(ubicaciones || []);
     }
 }
 
@@ -552,6 +550,8 @@ async function submitForm(event, tableName) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    loadAllData(); // Cargar todos los datos del usuario al iniciar
+
     const regionSelect = document.getElementById('contacto-region');
     const comunaSelect = document.getElementById('contacto-comuna');
 

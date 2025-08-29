@@ -4,77 +4,113 @@
 {% block description %}{% if user %}Perfil público de {{ user.nombre }} - {{ user.especialidad or 'Apicultor verificado en MeliAPP' }}{% else %}Usuario no encontrado - MeliAPP{% endif %}{% endblock %}
 
 {% block content %}
-<!-- Profile Header -->
+<!-- SECCIÓN 1: Información del Perfil - Listón Horizontal -->
 <section class="bg-gradient-to-r from-primary to-amber-600">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="flex flex-col md:flex-row items-center">
-            <!-- Contenido del header -->
-            <!-- Left Column - Profile Info -->
-            <div class="w-full md:w-1/2 pr-0 md:pr-6 mb-8 md:mb-0 flex items-center justify-center">
-                <div class="text-center w-full">
-                    {% if user or contact_info %}
-                    <div class="relative inline-block">
-                        <div class="w-32 h-32 rounded-full border-4 border-white shadow-lg bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center">
-                            <span class="text-4xl font-bold text-white">
-                                {{ (user.nombre_completo or user.nombre or user.username or 'U')[:2].upper() }}
-                            </span>
-                        </div>
-                        <div class="absolute bottom-0 right-0 w-8 h-8 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                            <span class="text-white text-sm">✓</span>
-                        </div>
-                    </div>
-                    <h1 class="text-4xl font-bold text-white mt-4">{{ contact_info.nombre_completo or user.nombre or 'Usuario' }}</h1>
-                    <p class="text-xl text-amber-100">{{ user.role or 'Apicultor' }}</p>
-                    <p class="text-sm text-amber-200 mt-2">
-                        {% if user.comuna and user.region %}
-                            {{ user.comuna }}, {{ user.region }}
-                        {% elif user.comuna %}
-                            {{ user.comuna }}
-                        {% elif user.region %}
-                            {{ user.region }}
-                        {% else %}
-                            Ubicación no especificada
-                        {% endif %}
-                    </p>
-                    {% else %}
-                    <div class="text-center">
-                        <div class="w-32 h-32 bg-slate-300 rounded-full mx-auto flex items-center justify-center">
-                            <span class="text-4xl font-bold text-slate-500">?</span>
-                        </div>
-                        <h1 class="text-4xl font-bold text-white mt-4">Usuario no encontrado</h1>
-                        <p class="text-xl text-amber-100">El usuario que buscas no existe</p>
-                    </div>
-                    {% endif %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% if user or contact_info %}
+        <div class="flex items-center justify-center space-x-8">
+            <!-- Avatar -->
+            <div class="relative flex-shrink-0">
+                <div class="w-24 h-24 rounded-full border-4 border-white shadow-lg bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center">
+                    <span class="text-3xl font-bold text-white">
+                        {{ (user.nombre_completo or user.nombre or user.username or 'U')[:2].upper() }}
+                    </span>
+                </div>
+                <div class="absolute bottom-0 right-0 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <span class="text-white text-xs">✓</span>
                 </div>
             </div>
             
-            <!-- Right Column - Botanical Chart -->
-            <div class="w-full md:w-1/2 aspect-square bg-white bg-opacity-20 rounded-lg p-6">
-                <div id="botanical-chart-container" 
-                     class="h-full flex flex-col"
-                     data-comuna="{{ contact_info.comuna if contact_info and contact_info.comuna else 'None' }}">
-                    <div class="flex-1 flex items-center justify-center">
-                        <div class="text-center">
-                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400 mx-auto mb-2"></div>
-                            <p class="text-white opacity-70">Cargando gráfico botánico...</p>
-                        </div>
-                    </div>
-                    
-                    <!-- Carrusel de Lotes integrado -->
-                    <div id="lotes-carousel-container" class="mt-4 bg-white bg-opacity-90 rounded-lg p-4" data-user-id="{{ user.id if user else 'None' }}">
-                        <h3 class="text-lg font-bold text-gray-800 mb-3">Mis Lotes</h3>
-                        <div id="lotes-carousel" class="flex overflow-x-auto space-x-2 py-2">
-                            <!-- Los botones de los lotes se insertarán aquí dinámicamente -->
-                            <p class="text-gray-500 col-span-full text-sm">Cargando lotes...</p>
-                        </div>
-                    </div>
+            <!-- Nombre -->
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-white">{{ contact_info.nombre_completo or user.nombre or 'Usuario' }}</h1>
+            </div>
+            
+            <!-- Rol y Ubicación -->
+            <div class="text-center">
+                <p class="text-xl text-amber-100 font-semibold">{{ user.role or 'Apicultor' }}</p>
+                <p class="text-sm text-amber-200 mt-1">
+                    {% if user.comuna and user.region %}
+                        {{ user.comuna }}, {{ user.region }}
+                    {% elif user.comuna %}
+                        {{ user.comuna }}
+                    {% elif user.region %}
+                        {{ user.region }}
+                    {% else %}
+                        Ubicación no especificada
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        {% else %}
+        <div class="flex items-center justify-center space-x-8">
+            <div class="w-24 h-24 bg-slate-300 rounded-full flex items-center justify-center">
+                <span class="text-3xl font-bold text-slate-500">?</span>
+            </div>
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-white">Usuario no encontrado</h1>
+                <p class="text-xl text-amber-100">El usuario que buscas no existe</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- SECCIÓN 2: Gráfico Botánico - Listón Horizontal Completo -->
+<section class="bg-white py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div id="botanical-chart-container" 
+             class="w-full"
+             data-comuna="{{ contact_info.comuna if contact_info and contact_info.comuna else 'None' }}">
+            <div class="flex-1 flex items-center justify-center py-8">
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                    <p class="text-gray-600">Cargando gráfico botánico...</p>
                 </div>
             </div>
         </div>
+    </div>
+</section>
+
+<!-- SECCIÓN 3: Lotes - Listón Horizontal Inferior -->
+<section class="bg-gray-50 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div id="lotes-carousel-container" class="bg-white rounded-lg shadow-sm p-6" data-user-id="{{ user.id if user else 'None' }}">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Mis Lotes</h3>
+            <div id="lotes-carousel" class="flex justify-center overflow-x-auto space-x-3 py-2">
+                <!-- Los botones de los lotes se insertarán aquí dinámicamente -->
+                <p class="text-gray-500 text-sm">Cargando lotes...</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SECCIÓN 4: QR del Lote Seleccionado -->
+<section id="lote-qr-section" class="bg-white py-8 border-b" style="display: none;">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Código QR del Lote</h2>
+        <p id="lote-qr-nombre" class="text-lg text-gray-600 mb-4">Selecciona un lote para ver su QR</p>
         
-        <!-- Barra separadora para botones futuros -->
-        <div class=" w-full mt-8 pt-4 border-t border-white border-opacity-30\></div>
- </div>
+        <div class="flex justify-center items-center space-x-8">
+            <!-- Contenedor del QR -->
+            <div id="lote-qr-code-container" class="bg-gray-50 rounded-lg p-4 inline-block shadow-md">
+                <img id="lote-qr-image" src="" alt="Código QR del lote" class="w-48 h-48 mx-auto" style="display: none;">
+                <div id="lote-qr-placeholder" class="w-48 h-48 flex items-center justify-center">
+                    <p class="text-gray-500">El QR aparecerá aquí</p>
+                </div>
+            </div>
+
+            <!-- Acciones del QR -->
+            <div class="flex flex-col space-y-3">
+                <button id="lote-generate-qr-btn" class="bg-blue-500 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors shadow-sm" disabled>
+                    <i class="fas fa-sync-alt mr-2"></i>Generar QR
+                </button>
+                <button id="lote-download-qr-btn" class="bg-green-500 text-white px-5 py-2 rounded-lg font-semibold hover:bg-green-600 transition-colors shadow-sm" disabled>
+                    <i class="fas fa-download mr-2"></i>Descargar QR
+                </button>
+            </div>
+        </div>
+    </div>
 </section>
 
 <!-- Edit Profile Button for Authenticated Users -->
@@ -122,15 +158,7 @@
                     </div>
                     
                     
-                    <!-- Información de Contacto -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {% if user.telefono %}
-                        <div class="bg-slate-50 rounded-lg p-4">
-                            <h4 class="font-semibold text-slate-700 mb-2">Teléfono</h4>
-                            <p class="text-slate-600">{{ user.telefono }}</p>
-                        </div>
-                        {% endif %}
-                    </div>
+
                 </div>    
                 </div>
 

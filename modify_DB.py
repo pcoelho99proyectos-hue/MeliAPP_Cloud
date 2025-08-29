@@ -468,28 +468,6 @@ def update_user_data(data, user_uuid):
     
     return db_modifier.update_record('usuarios', filtered_data, user_uuid, field_mappings, validation_rules)
 
-def update_user_location(data, user_uuid):
-    """Actualizar ubicación del usuario"""
-    field_mappings = {
-        'direccion': {},
-        'ciudad': {},
-        'provincia': {},
-        'pais': {},
-        'codigo_postal': {},
-        'latitud': {},
-        'longitud': {}
-    }
-    
-    validation_rules = {
-        'direccion': {'max_length': 255},
-        'ciudad': {'max_length': 100},
-        'provincia': {'max_length': 100},
-        'pais': {'max_length': 100},
-        'codigo_postal': {'max_length': 20}
-    }
-    
-    return db_modifier.update_record('ubicaciones', data, user_uuid, field_mappings, validation_rules)
-
 def update_user_contact(data, user_uuid):
     """Actualizar información de contacto del usuario"""
     field_mappings = {

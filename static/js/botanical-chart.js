@@ -70,9 +70,9 @@ class BotanicalChart {
                 return (order[a.categoria] || 5) - (order[b.categoria] || 5);
             });
 
-            // Tarjetas con nombres completos sin truncar
+            // Tarjetas con ancho uniforme y espaciado armónico
             const classesHtml = sortedData.map(cls => `
-                <div class="botanical-full-card rounded-lg p-3" style="border-left: 3px solid ${cls.color}; background: ${cls.color}08;">
+                <div class="botanical-full-card flex-1 min-w-48 max-w-64 rounded-lg p-3" style="border-left: 3px solid ${cls.color}; background: ${cls.color}08;">
                     <!-- Header con título completo -->
                     <div class="class-full-header flex items-center gap-2 mb-2">
                         <span class="text-xl" style="color: ${cls.color};">${cls.icono}</span>
@@ -100,8 +100,8 @@ class BotanicalChart {
                     </p>
                 </div>
                 
-                <!-- Grid responsivo 2-3 columnas -->
-                <div class="botanical-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <!-- Grid horizontal en una sola fila con ancho uniforme -->
+                <div class="botanical-grid flex flex-wrap gap-4 justify-center">
                     ${classesHtml}
                 </div>
                 

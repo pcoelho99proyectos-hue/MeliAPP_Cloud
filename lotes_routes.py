@@ -9,7 +9,10 @@ Este módulo contiene las rutas relacionadas con:
 
 import logging
 import json
-from flask import Blueprint, request, jsonify, render_template, session, flash, redirect, url_for, g
+from flask import Blueprint, request, jsonify, render_template, session, flash, redirect, url_for, g, send_file
+from io import BytesIO
+import segno
+from qr_code.generator import generate_qr_code
 from supabase_client import SupabaseClient
 from auth_manager import AuthManager
 from lotes_manager import lotes_manager
@@ -325,7 +328,112 @@ def gestionar_lotes_pagina():
     """Página para gestionar lotes de miel."""
     return render_template('pages/gestionar_lote.html')
 
+@lotes_api_bp.route('/lote/<lote_id>/qr', methods=['GET'])
+def generar_qr_lote(lote_id):
+    """
+    Genera y sirve un código QR para la URL de visualización de un lote específico.
+    
+    GET /api/lote/<lote_id>/qr
+    """
+    try:
+        # La URL base debería apuntar a una página pública para ver el lote
+        # Esta URL es un ejemplo y puede necesitar ajuste
+        base_url = request.host_url
+        lote_url = f"{base_url}lote/view/{lote_id}"
+        
+        logger.info(f"Generating QR code for Lote ID: {lote_id} with URL: {lote_url}")
+        
+        # Generar el QR code usando la función del módulo
+        qr_code_img = segno.make(lote_url, error='m')
+        
+        # Servir la imagen directamente para máxima calidad
+        buffer = BytesIO()
+        qr_code_img.save(buffer, kind='png', scale=20, border=2)
+        buffer.seek(0)
+        
+        return send_file(
+            buffer,
+            mimetype='image/png',
+            as_attachment=False,
+            download_name=f'qr_lote_{lote_id}.png'
+        )
+
+    except Exception as e:
+        logger.error(f"Error generating QR for lote {lote_id}: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': 'No se pudo generar el código QR.'}), 500
+
 # === ENDPOINTS DE DEPURACIÓN ===
+@lotes_api_bp.route('/lote/click/<lote_id>', methods=['POST'])
+def handle_lote_click(lote_id):
+    """
+    Endpoint para manejar clicks en botones de lotes del carousel.
+    Genera una URL y retorna información del lote clickeado.
+    
+    POST /api/lote/click/<lote_id>
+    """
+    try:
+        data = request.get_json() or {}
+        logger.info(f"🖱️ Click en lote: {lote_id}")
+        
+        # Obtener información del lote
+        try:
+            response = db_client.client.table('origenes_botanicos').select('*').eq('id', lote_id).execute()
+            if not response.data or len(response.data) == 0:
+                return jsonify({
+                    'success': False,
+                    'error': 'Lote no encontrado'
+                }), 404
+                
+            lote = response.data[0]
+        except Exception as e:
+            # Fallback con cliente autenticado
+            auth_client = get_singleton_authenticated_client()
+            if not auth_client:
+                return jsonify({
+                    'success': False,
+                    'error': 'Error de autenticación'
+                }), 401
+                
+            response = auth_client.table('origenes_botanicos').select('*').eq('id', lote_id).execute()
+            if not response.data or len(response.data) == 0:
+                return jsonify({
+                    'success': False,
+                    'error': 'Lote no encontrado'
+                }), 404
+                
+            lote = response.data[0]
+        
+        # Generar URL para el lote
+        generated_url = f"/api/lote/{lote_id}"
+        
+        # Preparar respuesta con información completa
+        response_data = {
+            'success': True,
+            'message': 'Lote clickeado exitosamente',
+            'lote_id': lote_id,
+            'lote_nombre': lote.get('nombre_miel', 'Sin nombre'),
+            'lote_orden': lote.get('orden_miel', 'N/A'),
+            'generated_url': generated_url,
+            'timestamp': datetime.now().isoformat(),
+            'user_data': data,
+            'lote_info': {
+                'temporada': lote.get('temporada'),
+                'kg_producidos': lote.get('kg_producidos'),
+                'composicion': lote.get('composicion'),
+                'fecha_registro': lote.get('fecha_registro')
+            }
+        }
+        
+        logger.info(f"✅ Click procesado exitosamente para lote {lote.get('nombre_miel', lote_id)}")
+        return jsonify(response_data), 200
+        
+    except Exception as e:
+        logger.error(f"❌ Error al procesar click en lote {lote_id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Error interno del servidor: {str(e)}'
+        }), 500
+
 @lotes_debug_bp.route('/eliminar-lote-directo/<lote_id>', methods=['GET'])
 def debug_eliminar_lote_directo(lote_id):
     """Endpoint de depuración para eliminar un lote directamente por su ID."""
