@@ -492,6 +492,48 @@ class AuthManager:
                 }
     
     @staticmethod
+    def change_user_password(current_password: str, new_password: str):
+        """
+        Cambia la contraseña de un usuario autenticado.
+        Verifica la contraseña actual antes de realizar el cambio.
+        """
+        if 'user_id' not in session or 'user_email' not in session:
+            return {"success": False, "error": "Usuario no autenticado", "status_code": 401}
+
+        if not new_password or len(new_password) < 6:
+            return {"success": False, "error": "La nueva contraseña debe tener al menos 6 caracteres", "status_code": 400}
+
+        user_email = session.get('user_email')
+
+        try:
+            # 1. Verificar la contraseña actual intentando iniciar sesión con ella.
+            test_auth_response = db.client.auth.sign_in_with_password({
+                "email": user_email,
+                "password": current_password
+            })
+
+            if not test_auth_response.user:
+                return {"success": False, "error": "La contraseña actual es incorrecta", "status_code": 401}
+
+            # 2. Si la contraseña es correcta, usar el cliente autenticado de la sesión actual para actualizar.
+            update_response = db.client.auth.update_user({"password": new_password})
+
+            if update_response.user:
+                logger.info(f"Contraseña actualizada exitosamente para el usuario {user_email}")
+                return {"success": True, "message": "Contraseña actualizada exitosamente."}
+            else:
+                logger.error(f"Error al actualizar la contraseña para {user_email}: Respuesta inesperada de Supabase.")
+                return {"success": False, "error": "No se pudo actualizar la contraseña. Inténtalo de nuevo.", "status_code": 500}
+
+        except Exception as e:
+            error_str = str(e)
+            logger.error(f"Excepción al cambiar la contraseña para {user_email}: {error_str}")
+            if 'Invalid login credentials' in error_str:
+                return {"success": False, "error": "La contraseña actual es incorrecta", "status_code": 401}
+            
+            return {"success": False, "error": "Ocurrió un error inesperado en el servidor.", "status_code": 500}
+
+    @staticmethod
     def logout_user():
         """Cierra la sesión del usuario actual."""
         session.clear()
@@ -671,6 +713,33 @@ class AuthManager:
             return False, f"Error enviando email: {str(e)}"
 
     
+    @staticmethod
+    def request_password_reset(email: str):
+        """Envía un correo de reseteo de contraseña utilizando Supabase."""
+        if not email:
+            return {"success": False, "error": "El correo es requerido", "status_code": 400}
+        
+        try:
+            # Aquí no se necesita redirect_to porque Supabase usará la URL configurada en el dashboard
+            # En esta versión de la librería, la llamada es a través de 'api'
+            db.client.auth.api.reset_password_for_email(email)
+            logger.info(f"Solicitud de reseteo de contraseña enviada para: {email}")
+            return {"success": True, "message": "Si el correo está registrado, recibirás un enlace para recuperar tu contraseña."}
+        except Exception as e:
+            # Por seguridad, no revelamos si el correo existe o no.
+            # Logueamos el error real pero devolvemos un mensaje genérico.
+            logger.error(f"Error al solicitar reseteo de contraseña para {email}: {str(e)}")
+            return {"success": True, "message": "Si el correo está registrado, recibirás un enlace para recuperar tu contraseña."}
+
+    @staticmethod
+    def request_password_reset_authenticated():
+        """Solicita un reseteo de contraseña para el usuario autenticado actual."""
+        if 'user_email' not in session:
+            return {"success": False, "error": "Usuario no autenticado", "status_code": 401}
+        
+        email = session['user_email']
+        return AuthManager.request_password_reset(email)
+
     @staticmethod
     def register_user(email: str, password: str, full_name: str, company: str = "", role: str = "regular"):
         """

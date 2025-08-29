@@ -8,7 +8,9 @@ Este módulo contiene las rutas relacionadas con:
 """
 
 import logging
-from flask import Blueprint, request, jsonify
+import os
+import pandas as pd
+from flask import Blueprint, jsonify, request
 
 logger = logging.getLogger(__name__)
 
@@ -58,3 +60,53 @@ def list_tables():
             return jsonify({"success": False, "error": result}), 500
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@data_tables_bp.route('/regiones', methods=['GET'])
+def get_regiones():
+    """Devuelve una lista de regiones desde el archivo CSV."""
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        csv_path = os.path.join(base_dir, 'docs', 'clases.csv')
+
+        if not os.path.exists(csv_path):
+            return jsonify({"success": False, "error": f"Archivo no encontrado en: {csv_path}"}), 404
+
+        df = pd.read_csv(csv_path, sep=';', header=0)
+        df.columns = [col.strip() for col in df.columns]
+        df = df.iloc[:, :-1] # Ignorar la última columna vacía por el delimitador final
+
+        regiones = sorted(df['Region'].dropna().unique().tolist())
+        return jsonify({"success": True, "regiones": regiones})
+
+    except Exception as e:
+        logger.error(f"Error al cargar regiones: {e}", exc_info=True)
+        return jsonify({"success": False, "error": "Error interno al procesar el archivo"}), 500
+
+@data_tables_bp.route('/comunas', methods=['GET'])
+def get_comunas():
+    """Devuelve una lista de comunas, opcionalmente filtrada por región."""
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        csv_path = os.path.join(base_dir, 'docs', 'clases.csv')
+
+        if not os.path.exists(csv_path):
+            return jsonify({"success": False, "error": f"Archivo no encontrado en: {csv_path}"}), 404
+
+        df = pd.read_csv(csv_path, sep=';', header=0)
+        df.columns = [col.strip() for col in df.columns]
+        df = df.iloc[:, :-1] # Ignorar la última columna vacía
+
+        region = request.args.get('region')
+        if region:
+            comunas_df = df[df['Region'] == region]
+            comunas = sorted(comunas_df['Comuna'].dropna().unique().tolist())
+        else:
+            comunas = sorted(df['Comuna'].dropna().unique().tolist())
+        
+        return jsonify({"success": True, "comunas": comunas})
+
+    except Exception as e:
+        logger.error(f"Error al cargar comunas: {e}", exc_info=True)
+        return jsonify({"success": False, "error": "Error interno al procesar el archivo"}), 500
+

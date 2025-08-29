@@ -30,6 +30,9 @@
                     <button onclick="showTab('ubicaciones')" id="tab-ubicaciones" class="tab-btn py-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
                         <i class="fas fa-map-marker-alt mr-2"></i>Ubicación
                     </button>
+                    <button onclick="showTab('seguridad')" id="tab-seguridad" class="tab-btn py-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-shield-alt mr-2"></i>Seguridad
+                    </button>
                 </nav>
             </div>
         </div>
@@ -79,6 +82,48 @@
                             <i class="fas fa-save mr-2"></i>Guardar y Continuar a Contacto
                         </button>
                     </form>
+                </div>
+
+                <!-- SEGURIDAD FORM -->
+                <div id="form-seguridad" class="tab-content hidden">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Cambiar Contraseña</h3>
+                        <p class="text-sm text-gray-600">Actualiza tu contraseña. Se recomienda usar una contraseña segura.</p>
+                    </div>
+                    
+                    <form onsubmit="submitPasswordChange(event)" class="space-y-6">
+                        <div class="grid grid-cols-1 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña Actual</label>
+                                <input type="password" id="current-password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nueva Contraseña</label>
+                                <input type="password" id="new-password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" required minlength="6">
+                                <p class="text-xs text-gray-500 mt-1">Debe tener al menos 6 caracteres.</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Confirmar Nueva Contraseña</label>
+                                <input type="password" id="confirm-new-password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" required>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-medium py-3 px-4 rounded-lg transition-colors">
+                            <i class="fas fa-key mr-2"></i>Actualizar Contraseña
+                        </button>
+                    </form>
+
+                    <hr class="my-8 border-gray-300">
+
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Recuperar por correo</h3>
+                        <p class="text-gray-600 mb-4">Si lo prefieres, puedes solicitar un enlace de recuperación a tu correo electrónico para cambiar tu contraseña desde allí.</p>
+                        <div class="flex justify-start">
+                            <button onclick="requestPasswordReset()" id="request-reset-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75">
+                                <i class="fas fa-envelope mr-2"></i>Enviar enlace de recuperación
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- INFO_CONTACTO FORM -->
@@ -149,36 +194,23 @@
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Comuna -->
-                            <div class="relative">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Comuna</label>
-                                <input type="text" 
-                                       name="comuna" 
-                                       id="contacto-comuna" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                                       placeholder="Las Condes"
-                                       autocomplete="off"
-                                       oninput="handleComunaInput(this)"
-                                       onblur="hideSuggestions('comuna')">
-                                <div id="comuna-suggestions" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 hidden max-h-40 overflow-y-auto">
-                                    <!-- Sugerencias dinámicas -->
-                                </div>
-                            </div>
-                            
                             <!-- Región -->
-                            <div class="relative">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Región</label>
-                                <input type="text" 
-                                       name="region" 
-                                       id="contacto-region" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                                       placeholder="Región Metropolitana"
-                                       autocomplete="off"
-                                       oninput="handleRegionInput(this)"
-                                       onblur="hideSuggestions('region')">
-                                <div id="region-suggestions" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 hidden max-h-40 overflow-y-auto">
-                                    <!-- Sugerencias dinámicas -->
-                                </div>
+                            <div>
+                                <label for="contacto-region" class="block text-sm font-medium text-gray-700 mb-2">Región</label>
+                                <select name="region" 
+                                        id="contacto-region" 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+                                    <option value="">Cargando regiones...</option>
+                                </select>
+                            </div>
+                            <!-- Comuna -->
+                            <div>
+                                <label for="contacto-comuna" class="block text-sm font-medium text-gray-700 mb-2">Comuna</label>
+                                <select name="comuna" 
+                                        id="contacto-comuna" 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+                                    <option value="">Cargando comunas...</option>
+                                </select>
                             </div>
                         </div>
                         
@@ -335,6 +367,38 @@
 </div>
 
 <script>
+// Request Password Reset for Authenticated User
+function requestPasswordReset() {
+    const btn = document.getElementById('request-reset-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
+
+    fetch('/api/auth/request-password-reset', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('success', data.message || 'Correo de recuperación enviado.');
+        } else {
+            showToast('error', data.error || 'No se pudo enviar el correo.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('error', 'Ocurrió un error de red.');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+}
+
 // Tab Management
 function showTab(tabName) {
     // Hide all tab contents
@@ -356,8 +420,10 @@ function showTab(tabName) {
     activeTab.classList.remove('border-transparent', 'text-gray-500');
     activeTab.classList.add('border-amber-500', 'text-amber-600');
     
-    // Load data for the selected tab
-    loadTabData(tabName);
+    // Load data for the selected tab, except for 'seguridad'
+    if (tabName !== 'seguridad') {
+        loadTabData(tabName);
+    }
 }
 
 // Load existing data for a tab
@@ -485,129 +551,112 @@ async function submitForm(event, tableName) {
     }
 }
 
-// Funciones para autocomplete de Comuna
-let comunaTimeout;
-async function handleComunaInput(input) {
-    const query = input.value.trim();
-    
-    // Capitalizar automáticamente mientras escribe
-    const capitalized = capitalizeWords(query);
-    if (input.value !== capitalized) {
-        const cursorPos = input.selectionStart;
-        input.value = capitalized;
-        input.setSelectionRange(cursorPos, cursorPos);
-    }
-    
-    // Limpiar timeout anterior
-    clearTimeout(comunaTimeout);
-    
-    if (query.length < 2) {
-        hideSuggestions('comuna');
-        return;
-    }
-    
-    // Debounce para evitar muchas consultas
-    comunaTimeout = setTimeout(async () => {
+document.addEventListener('DOMContentLoaded', function() {
+    const regionSelect = document.getElementById('contacto-region');
+    const comunaSelect = document.getElementById('contacto-comuna');
+
+    async function populateDropdown(selectElement, apiUrl, dataKey, placeholder) {
         try {
-            const response = await fetch(`/api/suggestions/comunas?q=${encodeURIComponent(query)}`);
+            const response = await fetch(apiUrl);
             const result = await response.json();
-            
-            if (result.success && result.suggestions) {
-                showSuggestions('comuna', result.suggestions, input);
+
+            if (result.success) {
+                selectElement.innerHTML = `<option value="">${placeholder}</option>`;
+                result[dataKey].forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item;
+                    option.textContent = item;
+                    selectElement.appendChild(option);
+                });
+            } else {
+                selectElement.innerHTML = `<option value="">Error al cargar</option>`;
+                console.error(`Error al cargar ${dataKey}:`, result.error);
             }
         } catch (error) {
-            console.error('Error obteniendo sugerencias de comunas:', error);
+            selectElement.innerHTML = `<option value="">Error de red</option>`;
+            console.error(`Error de red al cargar ${dataKey}:`, error);
         }
-    }, 300);
-}
+    }
 
-// Funciones para autocomplete de Región
-let regionTimeout;
-async function handleRegionInput(input) {
-    const query = input.value.trim();
-    
-    // Solo capitalizar si no contiene espacios múltiples o caracteres especiales
-    // Permitir espacios para regiones como "La Araucanía" y "Los Lagos"
-    const capitalized = capitalizeWordsPreservingSpaces(query);
-    if (input.value !== capitalized) {
-        const cursorPos = input.selectionStart;
-        input.value = capitalized;
-        input.setSelectionRange(cursorPos, cursorPos);
+    // Obtener la ubicación del usuario. Usar 'None' como string para diferenciar de un string vacío.
+    const userRegion = "{{ user_location.region if user_location.region is not none else 'None' }}";
+    const userComuna = "{{ user_location.comuna if user_location.comuna is not none else 'None' }}";
+
+    // Comprobar si los valores son válidos (no nulos y no vacíos)
+    const isRegionSet = userRegion && userRegion !== 'None';
+    const isComunaSet = userComuna && userComuna !== 'None';
+
+    if (isRegionSet && isComunaSet) {
+        // Si ambos campos están establecidos, mostrarlos y deshabilitarlos
+        regionSelect.innerHTML = `<option value="${userRegion}">${userRegion}</option>`;
+        comunaSelect.innerHTML = `<option value="${userComuna}">${userComuna}</option>`;
+        regionSelect.disabled = true;
+        comunaSelect.disabled = true;
+    } else {
+        // Si uno o ambos campos no están establecidos, permitir la selección
+        populateDropdown(regionSelect, '/api/regiones', 'regiones', 'Selecciona una región...');
+        comunaSelect.disabled = true;
+        comunaSelect.innerHTML = '<option value="">Selecciona una región primero</option>';
     }
-    
-    // Limpiar timeout anterior
-    clearTimeout(regionTimeout);
-    
-    if (query.length < 2) {
-        hideSuggestions('region');
-        return;
-    }
-    
-    // Debounce para evitar muchas consultas
-    regionTimeout = setTimeout(async () => {
-        try {
-            const response = await fetch(`/api/suggestions/regiones?q=${encodeURIComponent(query)}`);
-            const result = await response.json();
-            
-            if (result.success && result.suggestions) {
-                showSuggestions('region', result.suggestions, input);
-            }
-        } catch (error) {
-            console.error('Error obteniendo sugerencias de regiones:', error);
+
+    // Event listener para el cambio de región
+    regionSelect.addEventListener('change', function() {
+        const selectedRegion = this.value;
+        comunaSelect.disabled = true;
+        comunaSelect.innerHTML = '<option value="">Cargando comunas...</option>';
+
+        if (selectedRegion) {
+            // Cargar comunas basadas en la región seleccionada
+            populateDropdown(comunaSelect, `/api/comunas?region=${encodeURIComponent(selectedRegion)}`, 'comunas', 'Selecciona una comuna...')
+                .then(() => {
+                    comunaSelect.disabled = false; // Habilitar el dropdown de comunas
+                });
+        } else {
+            // Si no hay región seleccionada, deshabilitar y limpiar comunas
+            comunaSelect.innerHTML = '<option value="">Selecciona una región primero</option>';
         }
-    }, 300);
-}
-
-// Función para capitalizar palabras preservando espacios
-function capitalizeWordsPreservingSpaces(str) {
-    // Preservar espacios múltiples y solo capitalizar palabras reales
-    return str.replace(/\b\w+/g, function(word) {
-        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     });
-}
+});
 
-// Función para capitalizar palabras (mantener compatibilidad)
-function capitalizeWords(str) {
-    return capitalizeWordsPreservingSpaces(str);
-}
+async function submitPasswordChange(event) {
+    event.preventDefault();
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmNewPassword = document.getElementById('confirm-new-password').value;
 
-// Mostrar sugerencias
-function showSuggestions(type, suggestions, inputElement) {
-    const suggestionsContainer = document.getElementById(`${type}-suggestions`);
-    
-    if (suggestions.length === 0) {
-        hideSuggestions(type);
+    if (newPassword !== confirmNewPassword) {
+        showToast('error', 'Las nuevas contraseñas no coinciden.');
         return;
     }
-    
-    suggestionsContainer.innerHTML = '';
-    
-    suggestions.forEach(suggestion => {
-        const suggestionItem = document.createElement('div');
-        suggestionItem.className = 'px-3 py-2 cursor-pointer hover:bg-amber-50 text-sm';
-        suggestionItem.textContent = suggestion;
-        
-        suggestionItem.addEventListener('mousedown', (e) => {
-            e.preventDefault(); // Prevenir que se active onblur antes del click
-            inputElement.value = suggestion;
-            hideSuggestions(type);
-            inputElement.focus();
+
+    if (newPassword.length < 6) {
+        showToast('error', 'La nueva contraseña debe tener al menos 6 caracteres.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/auth/change-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                current_password: currentPassword, 
+                new_password: newPassword 
+            })
         });
-        
-        suggestionsContainer.appendChild(suggestionItem);
-    });
-    
-    suggestionsContainer.classList.remove('hidden');
-}
 
-// Ocultar sugerencias
-function hideSuggestions(type) {
-    setTimeout(() => {
-        const suggestionsContainer = document.getElementById(`${type}-suggestions`);
-        if (suggestionsContainer) {
-            suggestionsContainer.classList.add('hidden');
+        const result = await response.json();
+
+        if (result.success) {
+            showToast('success', 'Contraseña actualizada exitosamente.');
+            event.target.reset(); // Limpiar el formulario
+        } else {
+            showToast('error', result.error || 'No se pudo actualizar la contraseña.');
         }
-    }, 150); // Pequeño delay para permitir clicks en sugerencias
+    } catch (error) {
+        showToast('error', 'Ocurrió un error en el servidor.');
+    }
 }
 
 // Funciones para gestión de ubicaciones

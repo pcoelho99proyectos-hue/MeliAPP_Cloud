@@ -1,53 +1,339 @@
-Comuna;Nombre Comun;Nombre Cientifico;Clase;Origen;Periodo de Floracion
-Chiloe;Coigue de Chiloe;Nothofagus dombeyi;Arbol;Nativa;Primavera (Nov-Dic)
-Chiloe;Tineo;Weinmannia trichosperma;Arbol;Nativa;Primavera tardia (Nov-Dic)
-Chiloe;Matico;Buddleja globosa;Arbusto;Nativa;Verano (Dic-Feb)
-Chiloe;Chaura;Gaultheria mucronata;Arbusto;Nativa;Primavera - Verano (Nov-Mar)
-Chiloe;Maqui;Aristotelia chilensis;Arbol/Arbusto;Nativa;Primavera (Oct-Nov)
-Chiloe;Luma;Amomyrtus luma;Arbol;Nativa;Primavera (Oct-Nov)
-Chiloe;Trebol Blanco;Trifolium repens;Hierba;Introducida;Primavera - Verano (Nov-Mar)
-Chiloe;Cardo Negro;Cirsium vulgare;Hierba;Introducida;Verano (Dic-Feb)
-Chiloe;Crepis;Crepis capillaris;Hierba;Introducida;Primavera - Oto�o
-Chiloe;Diente de Leon;Taraxacum officinale;Hierba;Introducida;Primavera (Sep-Nov)
-Futrono;Maqui;Aristotelia chilensis;Arbol/Arbusto;Nativa;Primavera (Oct-Nov)
-Futrono;Luma;Amomyrtus luma;Arbol;Nativa;Primavera (Oct-Nov)
-Futrono;Tineo;Weinmannia trichosperma;Arbol;Nativa;Primavera tardia (Nov-Dic)
-Futrono;Siete Camisas;Escallonia rubra;Arbusto;Nativa;Verano (Dic-Feb)
-Futrono;Arrayan;Luma apiculata;Arbol;Nativa;Verano (Ene-Feb)
-Futrono;Tiaca;Caldcluvia paniculata;Arbol;Nativa;Verano (Ene-Feb)
-Futrono;Zarzamora;Rubus ulmifolius;Arbusto;Introducida;Verano (Dic-Feb)
-Futrono;Ulmo;Eucryphia cordifolia;Arbol;Nativa;Verano tardio (Feb-Mar)
-Futrono;Murta;Ugni molinae;Arbusto;Nativa;Primavera tardia - Verano
-Futrono;Chilco;Fuchsia magellanica;Arbusto;Nativa;Verano - Oto�o (Ene-Abr)
-Hornopiren;Coigue de Chiloe;Nothofagus dombeyi;Arbol;Nativa;Primavera (Nov-Dic)
-Hornopiren;Tineo;Weinmannia trichosperma;Arbol;Nativa;Primavera tardia (Nov-Dic)
-Hornopiren;Matico;Buddleja globosa;Arbusto;Nativa;Verano (Dic-Feb)
-Hornopiren;Chaura;Gaultheria mucronata;Arbusto;Nativa;Primavera - Verano (Nov-Mar)
-Hornopiren;Maqui;Aristotelia chilensis;Arbol/Arbusto;Nativa;Primavera (Oct-Nov)
-Hornopiren;Luma;Amomyrtus luma;Arbol;Nativa;Primavera (Oct-Nov)
-Hornopiren;Trebol Blanco;Trifolium repens;Hierba;Introducida;Primavera - Verano (Nov-Mar)
-Hornopiren;Cardo Negro;Cirsium vulgare;Hierba;Introducida;Verano (Dic-Feb)
-Hornopiren;Crepis;Crepis capillaris;Hierba;Introducida;Primavera - Oto�o
-Hornopiren;Diente de Leon;Taraxacum officinale;Hierba;Introducida;Primavera (Sep-Nov)
-Lonquimay;Michay;Berberis darwinii;Arbusto;Nativa;Primavera (Sep-Oct)
-Lonquimay;Notro;Embothrium coccineum;Arbol/Arbusto;Nativa;Primavera tardia y Verano tardio
-Lonquimay;Avellano Chileno;Gevuina avellana;Arbol;Nativa;Verano (Ene-Feb)
-Lonquimay;Maiten;Maytenus boaria;Arbol;Nativa;Primavera (Oct-Nov)
-Lonquimay;Diente de Leon;Taraxacum officinale;Hierba;Introducida;Primavera (Sep-Nov)
-Lonquimay;Trebol Blanco;Trifolium repens;Hierba;Introducida;Primavera - Verano (Nov-Mar)
-Melipeuco;Michay;Berberis darwinii;Arbusto;Nativa;Primavera (Sep-Oct)
-Melipeuco;Notro;Embothrium coccineum;Arbol/Arbusto;Nativa;Primavera tardia y Verano tardio
-Melipeuco;Avellano Chileno;Gevuina avellana;Arbol;Nativa;Verano (Ene-Feb)
-Melipeuco;Maiten;Maytenus boaria;Arbol;Nativa;Primavera (Oct-Nov)
-Melipeuco;Diente de Leon;Taraxacum officinale;Hierba;Introducida;Primavera (Sep-Nov)
-Melipeuco;Trebol Blanco;Trifolium repens;Hierba;Introducida;Primavera - Verano (Nov-Mar)
-Panguipulli;Maqui;Aristotelia chilensis;Arbol/Arbusto;Nativa;Primavera (Oct-Nov)
-Panguipulli;Luma;Amomyrtus luma;Arbol;Nativa;Primavera (Oct-Nov)
-Panguipulli;Tineo;Weinmannia trichosperma;Arbol;Nativa;Primavera tardia (Nov-Dic)
-Panguipulli;Siete Camisas;Escallonia rubra;Arbusto;Nativa;Verano (Dic-Feb)
-Panguipulli;Arrayan;Luma apiculata;Arbol;Nativa;Verano (Ene-Feb)
-Panguipulli;Tiaca;Caldcluvia paniculata;Arbol;Nativa;Verano (Ene-Feb)
-Panguipulli;Zarzamora;Rubus ulmifolius;Arbusto;Introducida;Verano (Dic-Feb)
-Panguipulli;Ulmo;Eucryphia cordifolia;Arbol;Nativa;Verano tardio (Feb-Mar)
-Panguipulli;Murta;Ugni molinae;Arbusto;Nativa;Primavera tardia - Verano
-Panguipulli;Chilco;Fuchsia magellanica;Arbusto;Nativa;Verano - Oto�o (Ene-Abr)
+Comuna;Region;Nombre Comun;Nombre Cientifico;Clase;Origen;Periodo de Floracion;
+Chiloe;Los Lagos;Coigue de Chiloe;Nothofagus dombeyi;Arbol;Nativa;Primavera (Nov-Dic);
+Chiloe;Los Lagos;Tineo;Weinmannia trichosperma;Arbol;Nativa;Primavera tardia (Nov-Dic);
+Chiloe;Los Lagos;Matico;Buddleja globosa;Arbusto;Nativa;Verano (Dic-Feb);
+Chiloe;Los Lagos;Chaura;Gaultheria mucronata;Arbusto;Nativa;Primavera - Verano (Nov-Mar);
+Chiloe;Los Lagos;Maqui;Aristotelia chilensis;Arbol/Arbusto;Nativa;Primavera (Oct-Nov);
+Chiloe;Los Lagos;Luma;Amomyrtus luma;Arbol;Nativa;Primavera (Oct-Nov);
+Chiloe;Los Lagos;Trebol Blanco;Trifolium repens;Hierba;Introducida;Primavera - Verano (Nov-Mar);
+Chiloe;Los Lagos;Cardo Negro;Cirsium vulgare;Hierba;Introducida;Verano (Dic-Feb);
+Chiloe;Los Lagos;Crepis;Crepis capillaris;Hierba;Introducida;Primavera - Oto�o;
+Chiloe;Los Lagos;Diente de Leon;Taraxacum officinale;Hierba;Introducida;Primavera (Sep-Nov);
+Futrono;Los Rios;Maqui;Aristotelia chilensis;Arbol/Arbusto;Nativa;Primavera (Oct-Nov);
+Futrono;Los Rios;Luma;Amomyrtus luma;Arbol;Nativa;Primavera (Oct-Nov);
+Futrono;Los Rios;Tineo;Weinmannia trichosperma;Arbol;Nativa;Primavera tardia (Nov-Dic);
+Futrono;Los Rios;Siete Camisas;Escallonia rubra;Arbusto;Nativa;Verano (Dic-Feb);
+Futrono;Los Rios;Arrayan;Luma apiculata;Arbol;Nativa;Verano (Ene-Feb);
+Futrono;Los Rios;Tiaca;Caldcluvia paniculata;Arbol;Nativa;Verano (Ene-Feb);
+Futrono;Los Rios;Zarzamora;Rubus ulmifolius;Arbusto;Introducida;Verano (Dic-Feb);
+Futrono;Los Rios;Ulmo;Eucryphia cordifolia;Arbol;Nativa;Verano tardio (Feb-Mar);
+Futrono;Los Rios;Murta;Ugni molinae;Arbusto;Nativa;Primavera tardia - Verano;
+Futrono;Los Rios;Chilco;Fuchsia magellanica;Arbusto;Nativa;Verano - Oto�o (Ene-Abr);
+Hornopiren;Los Lagos;Coigue de Chiloe;Nothofagus dombeyi;Arbol;Nativa;Primavera (Nov-Dic);
+Hornopiren;Los Lagos;Tineo;Weinmannia trichosperma;Arbol;Nativa;Primavera tardia (Nov-Dic);
+Hornopiren;Los Lagos;Matico;Buddleja globosa;Arbusto;Nativa;Verano (Dic-Feb);
+Hornopiren;Los Lagos;Chaura;Gaultheria mucronata;Arbusto;Nativa;Primavera - Verano (Nov-Mar);
+Hornopiren;Los Lagos;Maqui;Aristotelia chilensis;Arbol/Arbusto;Nativa;Primavera (Oct-Nov);
+Hornopiren;Los Lagos;Luma;Amomyrtus luma;Arbol;Nativa;Primavera (Oct-Nov);
+Hornopiren;Los Lagos;Trebol Blanco;Trifolium repens;Hierba;Introducida;Primavera - Verano (Nov-Mar);
+Hornopiren;Los Lagos;Cardo Negro;Cirsium vulgare;Hierba;Introducida;Verano (Dic-Feb);
+Hornopiren;Los Lagos;Crepis;Crepis capillaris;Hierba;Introducida;Primavera - Oto�o;
+Hornopiren;Los Lagos;Diente de Leon;Taraxacum officinale;Hierba;Introducida;Primavera (Sep-Nov);
+Lonquimay;La Araucania;Michay;Berberis darwinii;Arbusto;Nativa;Primavera (Sep-Oct);
+Lonquimay;La Araucania;Notro;Embothrium coccineum;Arbol/Arbusto;Nativa;Primavera tardia y Verano tardio;
+Lonquimay;La Araucania;Avellano Chileno;Gevuina avellana;Arbol;Nativa;Verano (Ene-Feb);
+Lonquimay;La Araucania;Maiten;Maytenus boaria;Arbol;Nativa;Primavera (Oct-Nov);
+Lonquimay;La Araucania;Diente de Leon;Taraxacum officinale;Hierba;Introducida;Primavera (Sep-Nov);
+Lonquimay;La Araucania;Trebol Blanco;Trifolium repens;Hierba;Introducida;Primavera - Verano (Nov-Mar);
+Melipeuco;La Araucania;Michay;Berberis darwinii;Arbusto;Nativa;Primavera (Sep-Oct);
+Melipeuco;La Araucania;Notro;Embothrium coccineum;Arbol/Arbusto;Nativa;Primavera tardia y Verano tardio;
+Melipeuco;La Araucania;Avellano Chileno;Gevuina avellana;Arbol;Nativa;Verano (Ene-Feb);
+Melipeuco;La Araucania;Maiten;Maytenus boaria;Arbol;Nativa;Primavera (Oct-Nov);
+Melipeuco;La Araucania;Diente de Leon;Taraxacum officinale;Hierba;Introducida;Primavera (Sep-Nov);
+Melipeuco;La Araucania;Trebol Blanco;Trifolium repens;Hierba;Introducida;Primavera - Verano (Nov-Mar);
+Panguipulli;Los Rios;Maqui;Aristotelia chilensis;Arbol/Arbusto;Nativa;Primavera (Oct-Nov);
+Panguipulli;Los Rios;Luma;Amomyrtus luma;Arbol;Nativa;Primavera (Oct-Nov);
+Panguipulli;Los Rios;Tineo;Weinmannia trichosperma;Arbol;Nativa;Primavera tardia (Nov-Dic);
+Panguipulli;Los Rios;Siete Camisas;Escallonia rubra;Arbusto;Nativa;Verano (Dic-Feb);
+Panguipulli;Los Rios;Tiaca;Caldcluvia paniculata;Arbol;Nativa;Verano (Ene-Feb);
+Panguipulli;Los Rios;Zarzamora;Rubus ulmifolius;Arbusto;Introducida;Verano (Dic-Feb);
+Panguipulli;Los Rios;Ulmo;Eucryphia cordifolia;Arbol;Nativa;Verano tardio (Feb-Mar);
+Panguipulli;Los Rios;Murta;Ugni molinae;Arbusto;Nativa;Primavera tardia - Verano;
+Panguipulli;Los Rios;Chilco;Fuchsia magellanica;Arbusto;Nativa;Verano - Oto�o(Ene-Abr);
+Concepcion;Biobio;Eucalipto;Eucalyptus globulus;Arbol;Introducida;Verano (Ene-Mar);
+Concepcion;Biobio;Quillay;Quillaja saponaria;Arbol;Nativa;Primavera (Oct-Dic);
+Concepcion;Biobio;Corcolen;Azara microphylla;Arbusto;Nativa;Primavera (Sep-Nov);
+Concepcion;Biobio;Radal;Lomatia hirsuta;Arbol;Nativa;Primavera (Sep-Nov);
+Concepcion;Biobio;Maqui;Aristotelia chilensis;Arbol/Arbusto;Nativa;Primavera (Oct-Nov);
+Concepcion;Biobio;Olivillo;Aextoxicon punctatum;Arbol;Nativa;Primavera (Sep-Oct);
+Concepcion;Biobio;Retamo;Teline monspessulana;Arbusto;Introducida;Primavera-Verano;
+Concepcion;Biobio;Avellanita;Avellanita bustillosii;Arbusto;Nativa;Primavera (Sep-Nov);
+Concepcion;Biobio;Espino;Acacia caven;Arbol;Nativa;Primavera (Ago-Oct);
+Concepcion;Biobio;Boldo;Peumus boldus;Arbol;Nativa;Invierno (Jul-Sep);
+San Pedro de la Paz;Biobio;Arrayan;Luma apiculata;Arbol;Nativa;Verano (Ene-Feb);
+San Pedro de la Paz;Biobio;Ulmo;Eucryphia cordifolia;Arbol;Nativa;Verano (Feb-Mar);
+San Pedro de la Paz;Biobio;Notro;Embothrium coccineum;Arbol/Arbusto;Nativa;Primavera-Verano;
+San Pedro de la Paz;Biobio;Canelo;Drimys winteri;Arbol;Nativa;Primavera (Oct-Dic);
+San Pedro de la Paz;Biobio;Murtilla;Ugni molinae;Arbusto;Nativa;Verano (Dic-Feb);
+San Pedro de la Paz;Biobio;Siete Camisas;Escallonia rubra;Arbusto;Nativa;Verano (Dic-Feb);
+San Pedro de la Paz;Biobio;Zarzamora;Rubus ulmifolius;Arbusto;Introducida;Verano (Dic-Feb);
+San Pedro de la Paz;Biobio;Trebol Blanco;Trifolium repens;Hierba;Introducida;Primavera-Verano;
+San Pedro de la Paz;Biobio;Lingue;Persea lingue;Arbol;Nativa;Primavera (Sep-Nov);
+San Pedro de la Paz;Biobio;Laurel;Laurelia sempervirens;Arbol;Nativa;Primavera (Ago-Oct);
+Chiguayante;Biobio;Peumo;Cryptocarya alba;Arbol;Nativa;Primavera (Oct-Nov);
+Chiguayante;Biobio;Litre;Lithraea caustica;Arbol;Nativa;Primavera (Oct-Dic);
+Chiguayante;Biobio;Patagua;Crinodendron patagua;Arbol;Nativa;Verano (Ene-Feb);
+Chiguayante;Biobio;Colliguay;Colliguaja integerrima;Arbusto;Nativa;Primavera (Sep-Nov);
+Chiguayante;Biobio;Quintral;Tristerix corymbosus;Arbusto;Nativa;Invierno-Primavera;
+Chiguayante;Biobio;Chilco;Fuchsia magellanica;Arbusto;Nativa;Verano-Oto�o;
+Chiguayante;Biobio;Brecillo;Baccharis linearis;Arbusto;Nativa;Verano-Oto�o;
+Chiguayante;Biobio;Raps;Brassica rapa;Hierba;Introducida;Primavera (Sep-Nov);
+Chiguayante;Biobio;Huingan;Schinus polygamus;Arbusto;Nativa;Primavera (Oct-Dic);
+Chiguayante;Biobio;Matico;Buddleja globosa;Arbusto;Nativa;Verano (Dic-Feb);
+Hualqui;Biobio;Tineo;Weinmannia trichosperma;Arbol;Nativa;Primavera (Nov-Dic);
+Hualqui;Biobio;Avellano;Gevuina avellana;Arbol;Nativa;Verano (Ene-Feb);
+Hualqui;Biobio;Tiaca;Caldcluvia paniculata;Arbol;Nativa;Verano (Ene-Feb);
+Hualqui;Biobio;Tepa;Tepualia stipularis;Arbol/Arbusto;Nativa;Verano (Ene-Mar);
+Hualqui;Biobio;Michay;Berberis darwinii;Arbusto;Nativa;Primavera (Sep-Oct);
+Hualqui;Biobio;Luma;Amomyrtus luma;Arbol;Nativa;Primavera (Oct-Nov);
+Hualqui;Biobio;Chequen;Luma chequen;Arbusto;Nativa;Verano (Ene-Feb);
+Hualqui;Biobio;Mayu;Sophora macrocarpa;Arbusto;Nativa;Primavera (Sep-Nov);
+Hualqui;Biobio;Corontillo;Escallonia pulverulenta;Arbol;Nativa;Verano (Dic-Feb);
+Hualqui;Biobio;Hualo;Nothofagus glauca;Arbol;Nativa;Primavera (Sep-Oct);
+Hualpen;Biobio;Maiten;Maytenus boaria;Arbol;Nativa;Primavera (Oct-Nov);
+Hualpen;Biobio;Arrayan Macho;Rhaphithamnus spinosus;Arbusto;Nativa;Primavera (Sep-Nov);
+Hualpen;Biobio;Copihue;Lapageria rosea;Arbusto;Nativa;Verano-Oto�o;
+Hualpen;Biobio;Voqui Blanco;Boquila trifoliolata;Arbusto;Nativa;Primavera (Sep-Nov);
+Hualpen;Biobio;Chagual;Puya chilensis;Hierba;Nativa;Verano (Oct-Feb);
+Hualpen;Biobio;Pingo-Pingo;Ephedra chilensis;Arbusto;Nativa;Primavera (Sep-Oct);
+Hualpen;Biobio;Dedal de Oro;Eschscholzia californica;Hierba;Introducida;Primavera (Sep-Dic);
+Hualpen;Biobio;Siete Venas;Plantago lanceolata;Hierba;Introducida;Primavera-Verano;
+Hualpen;Biobio;Manzanilla;Matricaria chamomilla;Hierba;Introducida;Verano (Nov-Feb);
+Hualpen;Biobio;Aromo;Acacia dealbata;Arbol;Introducida;Invierno (Jun-Ago);
+Santa Barbara;Biobio;Roble;Nothofagus obliqua;Arbol;Nativa;Primavera (Oct-Nov);
+Santa Barbara;Biobio;Rauli;Nothofagus alpina;Arbol;Nativa;Primavera (Oct-Nov);
+Santa Barbara;Biobio;Coigue;Nothofagus dombeyi;Arbol;Nativa;Primavera (Nov-Dic);
+Santa Barbara;Biobio;Lenga;Nothofagus pumilio;Arbol;Nativa;Primavera (Nov-Dic);
+Santa Barbara;Biobio;Ñirre;Nothofagus antarctica;Arbol/Arbusto;Nativa;Primavera (Nov-Dic);
+Santa Barbara;Biobio;Palma Chilena;Jubaea chilensis;Arbol;Nativa;Verano (Dic-Feb);
+Santa Barbara;Biobio;Cipres;Austrocedrus chilensis;Arbol;Nativa;Primavera (Sep-Oct);
+Santa Barbara;Biobio;Araucaria;Araucaria araucana;Arbol;Nativa;Primavera (Oct-Dic);
+Santa Barbara;Biobio;Canelo Andino;Drimys andina;Arbusto;Nativa;Verano (Ene-Feb);
+Santa Barbara;Biobio;Lleuque;Prumnopitys andina;Arbol;Nativa;Primavera (Sep-Oct);
+Los Angeles;Biobio;Eucalipto;Eucalyptus globulus;Arbol;Introducida;Verano (Ene-Mar);
+Los Angeles;Biobio;Quillay;Quillaja saponaria;Arbol;Nativa;Primavera (Oct-Dic);
+Los Angeles;Biobio;Espino;Acacia caven;Arbol;Nativa;Primavera (Ago-Oct);
+Los Angeles;Biobio;Corcolen;Azara microphylla;Arbusto;Nativa;Primavera (Sep-Nov);
+Los Angeles;Biobio;Maqui;Aristotelia chilensis;Arbol/Arbusto;Nativa;Primavera (Oct-Nov);
+Los Angeles;Biobio;Boldo;Peumus boldus;Arbol;Nativa;Invierno (Jul-Sep);
+Los Angeles;Biobio;Raps;Brassica rapa;Hierba;Introducida;Primavera (Sep-Nov);
+Los Angeles;Biobio;Trebol Blanco;Trifolium repens;Hierba;Introducida;Primavera-Verano;
+Los Angeles;Biobio;Zarzamora;Rubus ulmifolius;Arbusto;Introducida;Verano (Dic-Feb);
+Los Angeles;Biobio;Maiten;Maytenus boaria;Arbol;Nativa;Primavera (Oct-Nov);
+Cañete;Biobio;Arrayan;Luma apiculata;Arbol;Nativa;Verano (Ene-Feb);
+Cañete;Biobio;Ulmo;Eucryphia cordifolia;Arbol;Nativa;Verano (Feb-Mar);
+Cañete;Biobio;Canelo;Drimys winteri;Arbol;Nativa;Primavera (Oct-Dic);
+Cañete;Biobio;Tineo;Weinmannia trichosperma;Arbol;Nativa;Primavera (Nov-Dic);
+Cañete;Biobio;Notro;Embothrium coccineum;Arbol/Arbusto;Nativa;Primavera-Verano;
+Cañete;Biobio;Murtilla;Ugni molinae;Arbusto;Nativa;Verano (Dic-Feb);
+Cañete;Biobio;Chilco;Fuchsia magellanica;Arbusto;Nativa;Verano-Oto�o;
+Cañete;Biobio;Olivillo;Aextoxicon punctatum;Arbol;Nativa;Primavera (Sep-Oct);
+Cañete;Biobio;Avellano;Gevuina avellana;Arbol;Nativa;Verano (Ene-Feb);
+Cañete;Biobio;Laurel;Laurelia sempervirens;Arbol;Nativa;Primavera (Ago-Oct);
+Arauco;Biobio;Peumo;Cryptocarya alba;Arbol;Nativa;Primavera (Oct-Nov);
+Arauco;Biobio;Litre;Lithraea caustica;Arbol;Nativa;Primavera (Oct-Dic);
+Arauco;Biobio;Boldo;Peumus boldus;Arbol;Nativa;Invierno (Jul-Sep);
+Arauco;Biobio;Molle;Schinus latifolius;Arbol;Nativa;Primavera (Oct-Nov);
+Arauco;Biobio;Arrayan;Rhaphithamnus spinosus;Arbusto;Nativa;Primavera (Sep-Nov);
+Arauco;Biobio;Brecillo;Baccharis linearis;Arbusto;Nativa;Verano-Oto�o;
+Arauco;Biobio;Dedal de Oro;Eschscholzia californica;Hierba;Introducida;Primavera (Sep-Dic);
+Arauco;Biobio;Siete Venas;Plantago lanceolata;Hierba;Introducida;Primavera-Verano;
+Arauco;Biobio;Aromo;Acacia dealbata;Arbol;Introducida;Invierno (Jun-Ago);
+Arauco;Biobio;Pino Insigne;Pinus radiata;Arbol;Introducida;Primavera (Sep-Oct);
+Mulchen;Biobio;Roble;Nothofagus obliqua;Arbol;Nativa;Primavera (Oct-Nov);
+Mulchen;Biobio;Rauli;Nothofagus alpina;Arbol;Nativa;Primavera (Oct-Nov);
+Mulchen;Biobio;Coigue;Nothofagus dombeyi;Arbol;Nativa;Primavera (Nov-Dic);
+Mulchen;Biobio;Hualo;Nothofagus glauca;Arbol;Nativa;Primavera (Sep-Oct);
+Mulchen;Biobio;Avellano;Gevuina avellana;Arbol;Nativa;Verano (Ene-Feb);
+Mulchen;Biobio;Michay;Berberis darwinii;Arbusto;Nativa;Primavera (Sep-Oct);
+Mulchen;Biobio;Radal;Lomatia hirsuta;Arbol;Nativa;Primavera (Sep-Nov);
+Mulchen;Biobio;Quintral;Tristerix corymbosus;Arbusto;Nativa;Invierno-Primavera;
+Mulchen;Biobio;Mayu;Sophora macrocarpa;Arbusto;Nativa;Primavera (Sep-Nov);
+Mulchen;Biobio;Lingue;Persea lingue;Arbol;Nativa;Primavera (Sep-Nov);
+Nacimiento;Biobio;Eucalipto;Eucalyptus globulus;Arbol;Introducida;Verano (Ene-Mar);
+Nacimiento;Biobio;Quillay;Quillaja saponaria;Arbol;Nativa;Primavera (Oct-Dic);
+Nacimiento;Biobio;Peumo;Cryptocarya alba;Arbol;Nativa;Primavera (Oct-Nov);
+Nacimiento;Biobio;Litre;Lithraea caustica;Arbol;Nativa;Primavera (Oct-Dic);
+Nacimiento;Biobio;Huingan;Schinus polygamus;Arbusto;Nativa;Primavera (Oct-Dic);
+Nacimiento;Biobio;Colliguay;Colliguaja integerrima;Arbusto;Nativa;Primavera (Sep-Nov);
+Nacimiento;Biobio;Corontillo;Escallonia pulverulenta;Arbol;Nativa;Verano (Dic-Feb);
+Nacimiento;Biobio;Retamo;Teline monspessulana;Arbusto;Introducida;Primavera-Verano;
+Nacimiento;Biobio;Chequen;Luma chequen;Arbusto;Nativa;Verano (Ene-Feb);
+Nacimiento;Biobio;Patagua;Crinodendron patagua;Arbol;Nativa;Verano (Ene-Feb);
+Osorno;Los Lagos;Ulmo;Eucryphia cordifolia;Arbol;Nativa;Verano (Feb-Mar);
+Osorno;Los Lagos;Tineo;Weinmannia trichosperma;Arbol;Nativa;Primavera (Nov-Dic);
+Osorno;Los Lagos;Avellano;Gevuina avellana;Arbol;Nativa;Verano (Ene-Feb);
+Osorno;Los Lagos;Arrayan;Luma apiculata;Arbol;Nativa;Verano (Ene-Feb);
+Osorno;Los Lagos;Notro;Embothrium coccineum;Arbol/Arbusto;Nativa;Primavera-Verano;
+Osorno;Los Lagos;Murtilla;Ugni molinae;Arbusto;Nativa;Verano (Dic-Feb);
+Osorno;Los Lagos;Zarzamora;Rubus ulmifolius;Arbusto;Introducida;Verano (Dic-Feb);
+Osorno;Los Lagos;Trebol Blanco;Trifolium repens;Hierba;Introducida;Primavera-Verano;
+Osorno;Los Lagos;Diente de Leon;Taraxacum officinale;Hierba;Introducida;Primavera (Sep-Nov);
+Osorno;Los Lagos;Canelo;Drimys winteri;Arbol;Nativa;Primavera (Oct-Dic);
+Puerto Montt;Los Lagos;Ulmo;Eucryphia cordifolia;Arbol;Nativa;Verano (Feb-Mar);
+Puerto Montt;Los Lagos;Tepa;Laureliopsis philippiana;Arbol;Nativa;Primavera (Sep-Oct);
+Puerto Montt;Los Lagos;Luma;Amomyrtus luma;Arbol;Nativa;Primavera (Oct-Nov);
+Puerto Montt;Los Lagos;Coigue;Nothofagus dombeyi;Arbol;Nativa;Primavera (Nov-Dic);
+Puerto Montt;Los Lagos;Tepa;Tepualia stipularis;Arbol/Arbusto;Nativa;Verano (Ene-Mar);
+Puerto Montt;Los Lagos;Alerce;Fitzroya cupressoides;Arbol;Nativa;Primavera (Oct-Nov);
+Puerto Montt;Los Lagos;Michay;Berberis darwinii;Arbusto;Nativa;Primavera (Sep-Oct);
+Puerto Montt;Los Lagos;Chilco;Fuchsia magellanica;Arbusto;Nativa;Verano-Oto�o;
+Puerto Montt;Los Lagos;Siete Camisas;Escallonia rubra;Arbusto;Nativa;Verano (Dic-Feb);
+Puerto Montt;Los Lagos;Matico;Buddleja globosa;Arbusto;Nativa;Verano (Dic-Feb);
+Castro;Los Lagos;Arrayan;Luma apiculata;Arbol;Nativa;Verano (Ene-Feb);
+Castro;Los Lagos;Coigue de Chiloe;Nothofagus nitida;Arbol;Nativa;Primavera (Nov-Dic);
+Castro;Los Lagos;Canelo;Drimys winteri;Arbol;Nativa;Primavera (Oct-Dic);
+Castro;Los Lagos;Cipres de las Guaitecas;Pilgerodendron uviferum;Arbol;Nativa;Primavera (Oct-Dic);
+Castro;Los Lagos;Chaura;Gaultheria mucronata;Arbusto;Nativa;Primavera-Verano;
+Castro;Los Lagos;Murtilla;Ugni molinae;Arbusto;Nativa;Verano (Dic-Feb);
+Castro;Los Lagos;Nalca;Gunnera tinctoria;Hierba;Nativa;Primavera (Oct-Nov);
+Castro;Los Lagos;Papa;Solanum tuberosum;Hierba;Nativa;Verano (Ene-Feb);
+Castro;Los Lagos;Luma;Amomyrtus luma;Arbol;Nativa;Primavera (Oct-Nov);
+Castro;Los Lagos;Avellano;Gevuina avellana;Arbol;Nativa;Verano (Ene-Feb);
+Ancud;Los Lagos;Tineo;Weinmannia trichosperma;Arbol;Nativa;Primavera (Nov-Dic);
+Ancud;Los Lagos;Olivillo;Aextoxicon punctatum;Arbol;Nativa;Primavera (Sep-Oct);
+Ancud;Los Lagos;Mañio;Podocarpus nubigenus;Arbol;Nativa;Primavera (Sep-Oct);
+Ancud;Los Lagos;Mel;Amomyrtus meli;Arbol;Nativa;Primavera (Oct-Nov);
+Ancud;Los Lagos;Voqui de Fuego;Campsidium valdivianum;Arbusto;Nativa;Verano (Ene-Mar);
+Ancud;Los Lagos;Helecho Ampe;Lophosoria quadripinnata;Hierba;Nativa;(Esporas);
+Ancud;Los Lagos;Copihue;Lapageria rosea;Arbusto;Nativa;Verano-Oto�o;
+Ancud;Los Lagos;Quilineja;Luzuriaga radicans;Arbusto;Nativa;Primavera (Nov-Ene);
+Ancud;Los Lagos;Arrayan;Rhaphithamnus spinosus;Arbusto;Nativa;Primavera (Sep-Nov);
+Ancud;Los Lagos;Tiaca;Caldcluvia paniculata;Arbol;Nativa;Verano (Ene-Feb);
+Frutillar;Los Lagos;Ulmo;Eucryphia cordifolia;Arbol;Nativa;Verano (Feb-Mar);
+Frutillar;Los Lagos;Notro;Embothrium coccineum;Arbol/Arbusto;Nativa;Primavera-Verano;
+Frutillar;Los Lagos;Avellano;Gevuina avellana;Arbol;Nativa;Verano (Ene-Feb);
+Frutillar;Los Lagos;Radal;Lomatia hirsuta;Arbol;Nativa;Primavera (Sep-Nov);
+Frutillar;Los Lagos;Manzano;Malus domestica;Arbol;Introducida;Primavera (Oct-Nov);
+Frutillar;Los Lagos;Cerezo;Prunus avium;Arbol;Introducida;Primavera (Sep-Oct);
+Frutillar;Los Lagos;Frambueso;Rubus idaeus;Arbusto;Introducida;Verano (Dic-Feb);
+Frutillar;Los Lagos;Murra;Rubus ursinus;Arbusto;Introducida;Verano (Dic-Feb);
+Frutillar;Los Lagos;Ciruelo;Prunus domestica;Arbol;Introducida;Primavera (Sep-Oct);
+Frutillar;Los Lagos;Corontillo;Escallonia pulverulenta;Arbol;Nativa;Verano (Dic-Feb);
+Valdivia;Los Rios;Arrayan;Luma apiculata;Arbol;Nativa;Verano (Ene-Feb);
+Valdivia;Los Rios;Olivillo;Aextoxicon punctatum;Arbol;Nativa;Primavera (Sep-Oct);
+Valdivia;Los Rios;Canelo;Drimys winteri;Arbol;Nativa;Primavera (Oct-Dic);
+Valdivia;Los Rios;Notro;Embothrium coccineum;Arbol/Arbusto;Nativa;Primavera-Verano;
+Valdivia;Los Rios;Tineo;Weinmannia trichosperma;Arbol;Nativa;Primavera (Nov-Dic);
+Valdivia;Los Rios;Murtilla;Ugni molinae;Arbusto;Nativa;Verano (Dic-Feb);
+Valdivia;Los Rios;Copihue;Lapageria rosea;Arbusto;Nativa;Verano-Oto�o;
+Valdivia;Los Rios;Chilco;Fuchsia magellanica;Arbusto;Nativa;Verano-Oto�o;
+Valdivia;Los Rios;Laurel;Laurelia sempervirens;Arbol;Nativa;Primavera (Ago-Oct);
+La Union;Los Rios;Avellano;Gevuina avellana;Arbol;Nativa;Verano (Ene-Feb);
+La Union;Los Rios;Tepa;Laureliopsis philippiana;Arbol;Nativa;Primavera (Sep-Oct);
+La Union;Los Rios;Luma;Amomyrtus luma;Arbol;Nativa;Primavera (Oct-Nov);
+La Union;Los Rios;Lingue;Persea lingue;Arbol;Nativa;Primavera (Sep-Nov);
+La Union;Los Rios;Radal;Lomatia hirsuta;Arbol;Nativa;Primavera (Sep-Nov);
+La Union;Los Rios;Trebol Blanco;Trifolium repens;Hierba;Introducida;Primavera-Verano;
+La Union;Los Rios;Zarzamora;Rubus ulmifolius;Arbusto;Introducida;Verano (Dic-Feb);
+La Union;Los Rios;Maqui;Aristotelia chilensis;Arbol/Arbusto;Nativa;Primavera (Oct-Nov);
+La Union;Los Rios;Roble;Nothofagus obliqua;Arbol;Nativa;Primavera (Oct-Nov);
+La Union;Los Rios;Matico;Buddleja globosa;Arbusto;Nativa;Verano (Dic-Feb);
+Rio Bueno;Los Rios;Ulmo;Eucryphia cordifolia;Arbol;Nativa;Verano (Feb-Mar);
+Rio Bueno;Los Rios;Coigue;Nothofagus dombeyi;Arbol;Nativa;Primavera (Nov-Dic);
+Rio Bueno;Los Rios;Siete Camisas;Escallonia rubra;Arbusto;Nativa;Verano (Dic-Feb);
+Rio Bueno;Los Rios;Corontillo;Escallonia pulverulenta;Arbol;Nativa;Verano (Dic-Feb);
+Rio Bueno;Los Rios;Avellano;Gevuina avellana;Arbol;Nativa;Verano (Ene-Feb);
+Rio Bueno;Los Rios;Murtilla;Ugni molinae;Arbusto;Nativa;Verano (Dic-Feb);
+Rio Bueno;Los Rios;Arandano;Vaccinium corymbosum;Arbusto;Introducida;Primavera (Oct-Nov);
+Rio Bueno;Los Rios;Frambueso;Rubus idaeus;Arbusto;Introducida;Verano (Dic-Feb);
+Rio Bueno;Los Rios;Raps;Brassica rapa;Hierba;Introducida;Primavera (Sep-Nov);
+Rio Bueno;Los Rios;Tineo;Weinmannia trichosperma;Arbol;Nativa;Primavera (Nov-Dic);
+Lago Ranco;Los Rios;Coigue;Nothofagus dombeyi;Arbol;Nativa;Primavera (Nov-Dic);
+Lago Ranco;Los Rios;Rauli;Nothofagus alpina;Arbol;Nativa;Primavera (Oct-Nov);
+Lago Ranco;Los Rios;Lenga;Nothofagus pumilio;Arbol;Nativa;Primavera (Nov-Dic);
+Lago Ranco;Los Rios;Mañio;Podocarpus nubigenus;Arbol;Nativa;Primavera (Sep-Oct);
+Lago Ranco;Los Rios;Notro;Embothrium coccineum;Arbol/Arbusto;Nativa;Primavera-Verano;
+Lago Ranco;Los Rios;Michay;Berberis darwinii;Arbusto;Nativa;Primavera (Sep-Oct);
+Lago Ranco;Los Rios;Canelo Andino;Drimys andina;Arbusto;Nativa;Verano (Ene-Feb);
+Lago Ranco;Los Rios;Chaura;Gaultheria mucronata;Arbusto;Nativa;Primavera-Verano;
+Lago Ranco;Los Rios;Tiaca;Caldcluvia paniculata;Arbol;Nativa;Verano (Ene-Feb);
+Lago Ranco;Los Rios;Tepa;Tepualia stipularis;Arbol/Arbusto;Nativa;Verano (Ene-Mar);
+Mariquina;Los Rios;Arrayan;Luma apiculata;Arbol;Nativa;Verano (Ene-Feb);
+Mariquina;Los Rios;Mel;Amomyrtus meli;Arbol;Nativa;Primavera (Oct-Nov);
+Mariquina;Los Rios;Lingue;Persea lingue;Arbol;Nativa;Primavera (Sep-Nov);
+Mariquina;Los Rios;Tepa;Laureliopsis philippiana;Arbol;Nativa;Primavera (Sep-Oct);
+Mariquina;Los Rios;Patagua;Crinodendron patagua;Arbol;Nativa;Verano (Ene-Feb);
+Mariquina;Los Rios;Chequen;Luma chequen;Arbusto;Nativa;Verano (Ene-Feb);
+Mariquina;Los Rios;Voqui de Fuego;Campsidium valdivianum;Arbusto;Nativa;Verano (Ene-Mar);
+Mariquina;Los Rios;Olivillo;Aextoxicon punctatum;Arbol;Nativa;Primavera (Sep-Oct);
+Mariquina;Los Rios;Diente de Leon;Taraxacum officinale;Hierba;Introducida;Primavera (Sep-Nov);
+Mariquina;Los Rios;Eucalipto;Eucalyptus globulus;Arbol;Introducida;Verano (Ene-Mar);
+Temuco;La Araucania;Maqui;Aristotelia chilensis;Arbol/Arbusto;Nativa;Primavera (Oct-Nov);
+Temuco;La Araucania;Quillay;Quillaja saponaria;Arbol;Nativa;Primavera (Oct-Dic);
+Temuco;La Araucania;Maiten;Maytenus boaria;Arbol;Nativa;Primavera (Oct-Nov);
+Temuco;La Araucania;Avellano;Gevuina avellana;Arbol;Nativa;Verano (Ene-Feb);
+Temuco;La Araucania;Corcolen;Azara microphylla;Arbusto;Nativa;Primavera (Sep-Nov);
+Temuco;La Araucania;Trebol Blanco;Trifolium repens;Hierba;Introducida;Primavera-Verano;
+Temuco;La Araucania;Diente de Leon;Taraxacum officinale;Hierba;Introducida;Primavera (Sep-Nov);
+Temuco;La Araucania;Zarzamora;Rubus ulmifolius;Arbusto;Introducida;Verano (Dic-Feb);
+Temuco;La Araucania;Espino;Acacia caven;Arbol;Nativa;Primavera (Ago-Oct);
+Villarrica;La Araucania;Notro;Embothrium coccineum;Arbol/Arbusto;Nativa;Primavera-Verano;
+Villarrica;La Araucania;Ulmo;Eucryphia cordifolia;Arbol;Nativa;Verano (Feb-Mar);
+Villarrica;La Araucania;Arrayan;Luma apiculata;Arbol;Nativa;Verano (Ene-Feb);
+Villarrica;La Araucania;Coigue;Nothofagus dombeyi;Arbol;Nativa;Primavera (Nov-Dic);
+Villarrica;La Araucania;Avellano;Gevuina avellana;Arbol;Nativa;Verano (Ene-Feb);
+Villarrica;La Araucania;Murtilla;Ugni molinae;Arbusto;Nativa;Verano (Dic-Feb);
+Villarrica;La Araucania;Michay;Berberis darwinii;Arbusto;Nativa;Primavera (Sep-Oct);
+Villarrica;La Araucania;Copihue;Lapageria rosea;Arbusto;Nativa;Verano-Oto�o;
+Villarrica;La Araucania;Canelo;Drimys winteri;Arbol;Nativa;Primavera (Oct-Dic);
+Villarrica;La Araucania;Tineo;Weinmannia trichosperma;Arbol;Nativa;Primavera (Nov-Dic);
+Pucun;La Araucania;Araucaria;Araucaria araucana;Arbol;Nativa;Primavera (Oct-Dic);
+Pucun;La Araucania;Lenga;Nothofagus pumilio;Arbol;Nativa;Primavera (Nov-Dic);
+Pucun;La Araucania;Rauli;Nothofagus alpina;Arbol;Nativa;Primavera (Oct-Nov);
+Pucun;La Araucania;Notro;Embothrium coccineum;Arbol/Arbusto;Nativa;Primavera-Verano;
+Pucun;La Araucania;Canelo Andino;Drimys andina;Arbusto;Nativa;Verano (Ene-Feb);
+Pucun;La Araucania;Michay;Berberis darwinii;Arbusto;Nativa;Primavera (Sep-Oct);
+Pucun;La Araucania;Quintral;Tristerix corymbosus;Arbusto;Nativa;Invierno-Primavera;
+Pucun;La Araucania;Chilco;Fuchsia magellanica;Arbusto;Nativa;Verano-Oto�o;
+Puc�n;La Araucania;Lleuque;Prumnopitys andina;Arbol;Nativa;Primavera (Sep-Oct);
+Angol;La Araucania;Roble;Nothofagus obliqua;Arbol;Nativa;Primavera (Oct-Nov);
+Angol;La Araucania;Peumo;Cryptocarya alba;Arbol;Nativa;Primavera (Oct-Nov);
+Angol;La Araucania;Boldo;Peumus boldus;Arbol;Nativa;Invierno (Jul-Sep);
+Angol;La Araucania;Quillay;Quillaja saponaria;Arbol;Nativa;Primavera (Oct-Dic);
+Angol;La Araucania;Litre;Lithraea caustica;Arbol;Nativa;Primavera (Oct-Dic);
+Angol;La Araucania;Hualo;Nothofagus glauca;Arbol;Nativa;Primavera (Sep-Oct);
+Angol;La Araucania;Radal;Lomatia hirsuta;Arbol;Nativa;Primavera (Sep-Nov);
+Angol;La Araucania;Mayu;Sophora macrocarpa;Arbusto;Nativa;Primavera (Sep-Nov);
+Angol;La Araucania;Eucalipto;Eucalyptus globulus;Arbol;Introducida;Verano (Ene-Mar);
+Angol;La Araucania;Trigo;Triticum aestivum;Hierba;Introducida;Primavera (Nov-Dic);
+Curacautin;La Araucania;Araucaria;Araucaria araucana;Arbol;Nativa;Primavera (Oct-Dic);
+Curacautin;La Araucania;Cipres de la Cordillera;Austrocedrus chilensis;Arbol;Nativa;Primavera (Sep-Oct);
+Curacautin;La Araucania;Ñirre;Nothofagus antarctica;Arbol/Arbusto;Nativa;Primavera (Nov-Dic);
+Curacautin;La Araucania;Lenga;Nothofagus pumilio;Arbol;Nativa;Primavera (Nov-Dic);
+Curacautin;La Araucania;Maiten;Maytenus boaria;Arbol;Nativa;Primavera (Oct-Nov);
+Curacautin;La Araucania;Notro;Embothrium coccineum;Arbol/Arbusto;Nativa;Primavera-Verano;
+Curacautin;La Araucania;Coigue;Nothofagus dombeyi;Arbol;Nativa;Primavera (Nov-Dic);
+Curacautin;La Araucania;Quintral del Coigue;Tristerix tetrandrus;Arbusto;Nativa;Verano (Dic-Mar);
+Curacautin;La Araucania;Chaura;Gaultheria mucronata;Arbusto;Nativa;Primavera-Verano;
+Curacautin;La Araucania;Calafate;Berberis microphylla;Arbusto;Nativa;Primavera (Oct-Nov);
+Lonquimay;La Araucania;Araucaria;Araucaria araucana;Arbol;Nativa;Primavera (Oct-Dic);
+Lonquimay;La Araucania;Lenga;Nothofagus pumilio;Arbol;Nativa;Primavera (Nov-Dic);
+Lonquimay;La Araucania;Ñirre;Nothofagus antarctica;Arbol/Arbusto;Nativa;Primavera (Nov-Dic);
+Lonquimay;La Araucania;Paramela;Adesmia longipes;Arbusto;Nativa;Verano (Ene-Feb);
+Lonquimay;La Araucania;Menta Blanca;Satureja parvifolia;Hierba;Nativa;Verano (Ene-Mar);
+Lonquimay;La Araucania;Pasto Miel;Holcus lanatus;Hierba;Introducida;Verano (Dic-Feb);
+Lonquimay;La Araucania;Diente de Leon;Taraxacum officinale;Hierba;Introducida;Primavera (Sep-Nov);
+Lonquimay;La Araucania;Trebol Blanco;Trifolium repens;Hierba;Introducida;Primavera-Verano;
+Lonquimay;La Araucania;Cardo;Carduus nutans;Hierba;Introducida;Verano (Dic-Mar);
+Lonquimay;La Araucania;Escabiosa;Scabiosa atropurpurea;Hierba;Introducida;Verano (Dic-Mar);
+Nueva Imperial;La Araucania;Maqui;Aristotelia chilensis;Arbol/Arbusto;Nativa;Primavera (Oct-Nov);
+Nueva Imperial;La Araucania;Boldo;Peumus boldus;Arbol;Nativa;Invierno (Jul-Sep);
+Nueva Imperial;La Araucania;Peumo;Cryptocarya alba;Arbol;Nativa;Primavera (Oct-Nov);
+Nueva Imperial;La Araucania;Canelo;Drimys winteri;Arbol;Nativa;Primavera (Oct-Dic);
+Nueva Imperial;La Araucania;Lingue;Persea lingue;Arbol;Nativa;Primavera (Sep-Nov);
+Nueva Imperial;La Araucania;Raps;Brassica rapa;Hierba;Introducida;Primavera (Sep-Nov);
+Nueva Imperial;La Araucania;Maravilla;Helianthus annuus;Hierba;Introducida;Verano (Ene-Mar);
+Nueva Imperial;La Araucania;Avellano;Gevuina avellana;Arbol;Nativa;Verano (Ene-Feb);
+Nueva Imperial;La Araucania;Chequen;Luma chequen;Arbusto;Nativa;Verano (Ene-Feb);
+Nueva Imperial;La Araucania;Corcolen;Azara microphylla;Arbusto;Nativa;Primavera (Sep-Nov);
+Carahue;La Araucania;Boldo;Peumus boldus;Arbol;Nativa;Invierno (Jul-Sep);
+Carahue;La Araucania;Arrayan;Luma apiculata;Arbol;Nativa;Verano (Ene-Feb);
+Carahue;La Araucania;Tineo;Weinmannia trichosperma;Arbol;Nativa;Primavera (Nov-Dic);
+Carahue;La Araucania;Canelo;Drimys winteri;Arbol;Nativa;Primavera (Oct-Dic);
+Carahue;La Araucania;Matico;Buddleja globosa;Arbusto;Nativa;Verano (Dic-Feb);
+Carahue;La Araucania;Eucalipto;Eucalyptus globulus;Arbol;Introducida;Verano (Ene-Mar);
+Carahue;La Araucania;Papa;Solanum tuberosum;Hierba;Nativa;Verano (Ene-Feb);
+Carahue;La Araucania;Olivillo;Aextoxicon punctatum;Arbol;Nativa;Primavera (Sep-Oct);
+Carahue;La Araucania;Maqui;Aristotelia chilensis;Arbol/Arbusto;Nativa;Primavera (Oct-Nov);
+Carahue;La Araucania;Dedal de Oro;Eschscholzia californica;Hierba;Introducida;Primavera (Sep-Dic);

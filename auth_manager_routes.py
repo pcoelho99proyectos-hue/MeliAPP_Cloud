@@ -12,6 +12,7 @@ Este módulo contiene todas las rutas relacionadas con autenticación:
 
 import logging
 from flask import Blueprint, render_template, request, jsonify, url_for, redirect, session
+from supabase_client import db # Importar el cliente de base de datos
 from auth_manager import AuthManager
 
 logger = logging.getLogger(__name__)
@@ -153,11 +154,31 @@ def register():
 def edit_profile():
     """
     Página de edición de perfil para usuarios autenticados.
-    Solo accesible si el usuario está logueado.
+    Carga los datos de ubicación del usuario para determinar si los campos deben ser editables.
     """
-    # Obtener el ID del usuario actual desde la sesión
-    current_user_id = session.get('user_id')
-    return render_template('pages/edit_profile.html', user_id=current_user_id)
+    try:
+        # Obtener el UUID del usuario actual desde la sesión
+        auth_user_id = session.get('user_id')
+        if not auth_user_id:
+            return redirect(url_for('auth.login'))
+
+        # Obtener la información de contacto del usuario de forma segura
+        user_location = {'region': None, 'comuna': None}
+        try:
+            contact_info_response = db.client.table('info_contacto').select('region, comuna').eq('auth_user_id', auth_user_id).maybe_single().execute()
+            if contact_info_response.data:
+                # Asegurarse de que los valores no son None, lo que indica que no han sido establecidos
+                user_location['region'] = contact_info_response.data.get('region')
+                user_location['comuna'] = contact_info_response.data.get('comuna')
+        except Exception as e:
+            logger.warning(f"No se pudo obtener info_contacto para {auth_user_id}, se asumirá que no existe. Error: {e}")
+
+        return render_template('pages/edit_profile.html', user_id=auth_user_id, user_location=user_location)
+
+    except Exception as e:
+        logger.error(f"Error al cargar la página de edición de perfil: {e}", exc_info=True)
+        # En caso de error, se renderiza la página sin bloquear los campos para no impedir la edición
+        return render_template('pages/edit_profile.html', user_id=session.get('user_id'), user_location={'region': None, 'comuna': None})
 
 # ====================
 # Rutas OAuth de Google
@@ -436,6 +457,35 @@ def api_auth_session():
         
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+# ====================
+# Rutas de Cambio de Contraseña
+# ====================
+
+@auth_bp.route('/api/auth/request-password-reset', methods=['POST'])
+@AuthManager.login_required
+def handle_request_password_reset_authenticated():
+    """Maneja la solicitud de reseteo de contraseña para un usuario logueado."""
+    result = AuthManager.request_password_reset_authenticated()
+    status_code = result.get('status_code', 200 if result.get('success') else 500)
+    return jsonify(result), status_code
+
+
+@auth_bp.route('/api/auth/change-password', methods=['POST'])
+@AuthManager.login_required
+def handle_change_password():
+    """Maneja el cambio de contraseña para un usuario autenticado."""
+    data = request.get_json()
+    if not data or 'current_password' not in data or 'new_password' not in data:
+        return jsonify({"success": False, "error": "Faltan parámetros: contraseña actual y nueva son requeridas."}), 400
+
+    current_password = data.get('current_password')
+    new_password = data.get('new_password')
+
+    result = AuthManager.change_user_password(current_password, new_password)
+
+    status_code = result.get('status_code', 200 if result.get('success') else 500)
+    return jsonify(result), status_code
 
 # ====================
 # Rutas de Debug OAuth
