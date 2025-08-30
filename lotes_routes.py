@@ -336,10 +336,32 @@ def generar_qr_lote(lote_id):
     GET /api/lote/<lote_id>/qr
     """
     try:
-        # La URL base debería apuntar a una página pública para ver el lote
-        # Esta URL es un ejemplo y puede necesitar ajuste
+        # Obtener información del lote para generar la URL correcta del perfil
+        try:
+            response = db_client.client.table('origenes_botanicos').select('auth_user_id').eq('id', lote_id).execute()
+            if not response.data or len(response.data) == 0:
+                return jsonify({'success': False, 'error': 'Lote no encontrado.'}), 404
+            
+            auth_user_id = response.data[0].get('auth_user_id')
+            if not auth_user_id:
+                return jsonify({'success': False, 'error': 'Lote sin usuario asociado.'}), 400
+        except Exception as e:
+            # Fallback con cliente autenticado
+            auth_client = get_singleton_authenticated_client()
+            if not auth_client:
+                return jsonify({'success': False, 'error': 'Error de autenticación.'}), 401
+            
+            response = auth_client.table('origenes_botanicos').select('auth_user_id').eq('id', lote_id).execute()
+            if not response.data or len(response.data) == 0:
+                return jsonify({'success': False, 'error': 'Lote no encontrado.'}), 404
+            
+            auth_user_id = response.data[0].get('auth_user_id')
+            if not auth_user_id:
+                return jsonify({'success': False, 'error': 'Lote sin usuario asociado.'}), 400
+        
+        # Generar URL del perfil del usuario con el lote específico
         base_url = request.host_url
-        lote_url = f"{base_url}lote/view/{lote_id}"
+        lote_url = f"{base_url}profile/{auth_user_id}?lote={lote_id}"
         
         logger.info(f"Generating QR code for Lote ID: {lote_id} with URL: {lote_url}")
         
@@ -403,8 +425,9 @@ def handle_lote_click(lote_id):
                 
             lote = response.data[0]
         
-        # Generar URL para el lote
-        generated_url = f"/api/lote/{lote_id}"
+        # Generar URL para el perfil del usuario con el lote específico
+        auth_user_id = lote.get('auth_user_id')
+        generated_url = f"/profile/{auth_user_id}?lote={lote_id}"
         
         # Preparar respuesta con información completa
         response_data = {

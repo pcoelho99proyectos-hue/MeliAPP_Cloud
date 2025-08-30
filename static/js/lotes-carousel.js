@@ -156,8 +156,6 @@ function showSuccessMessage(data) {
                     <div class="mt-2 text-sm">
                         <p><strong>Lote:</strong> ${data.lote_nombre}</p>
                         <p><strong>Orden:</strong> ${data.lote_orden}</p>
-                        <p><strong>URL Generada:</strong> <code class="bg-green-600 px-1 rounded">${data.generated_url}</code></p>
-                        <p><strong>Timestamp:</strong> ${new Date(data.timestamp).toLocaleString()}</p>
                     </div>
                 </div>
                 <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">

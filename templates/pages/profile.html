@@ -412,6 +412,38 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             }
         }
 
+        // Auto-select lote from URL parameter
+        function checkLoteParameter() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const loteId = urlParams.get('lote');
+            
+            if (loteId) {
+                console.log(`Auto-selecting lote from URL parameter: ${loteId}`);
+                
+                // Wait for lotes carousel to load, then simulate click on the specific lote
+                setTimeout(() => {
+                    const loteButton = document.querySelector(`[data-lote-id="${loteId}"]`);
+                    if (loteButton) {
+                        console.log(`Found lote button for ${loteId}, clicking...`);
+                        loteButton.click();
+                        
+                        // Scroll to the QR section after selection
+                        setTimeout(() => {
+                            const qrSection = document.getElementById('lote-qr-section');
+                            if (qrSection) {
+                                qrSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }, 1000);
+                    } else {
+                        console.warn(`Lote button not found for ID: ${loteId}`);
+                    }
+                }, 2000); // Wait 2 seconds for carousel to fully load
+            }
+        }
+
+        // Call the function when page loads
+        document.addEventListener('DOMContentLoaded', checkLoteParameter);
+
     </script>
     
     <!-- Botanical Chart Integration -->

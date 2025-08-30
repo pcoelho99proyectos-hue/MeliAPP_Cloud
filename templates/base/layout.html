@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" class="scroll-smooth">
+<html lang="es" class="scroll-smooth" id="html-root">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,6 +11,7 @@
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -45,14 +46,14 @@
     
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-slate-50 font-sans text-slate-800 min-h-screen flex flex-col">
+<body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-800 dark:text-slate-200 min-h-screen flex flex-col transition-colors duration-300">
     <!-- Header -->
-    <header class="bg-white shadow-sm sticky top-0 z-50 border-b border-slate-200">
+    <header class="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-50 border-b border-slate-200 dark:border-slate-700 transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
                 <div class="flex items-center">
-                    <a href="/" class="text-2xl font-bold text-primary">
+                    <a href="/" class="text-2xl font-bold text-primary dark:text-amber-400">
                         MeliAPP
                     </a>
                 </div>
@@ -60,13 +61,13 @@
                 <!-- Navigation -->
                 <nav class="hidden md:flex space-x-8 items-center">
                     {% if g.user %}
-                        <a href="/" class="text-slate-600 hover:text-primary transition-colors">Inicio</a>
-                        <a href="/search" class="text-slate-600 hover:text-primary transition-colors">Buscar</a>
-                        <a href="/gestionar-lote" class="text-slate-600 hover:text-primary transition-colors">Gestionar Lotes</a>
+                        <a href="/" class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-amber-400 transition-colors">Inicio</a>
+                        <a href="/search" class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-amber-400 transition-colors">Buscar</a>
+                        <a href="/gestionar-lote" class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-amber-400 transition-colors">Gestionar Lotes</a>
                         <div class="relative" x-data="{ open: false }">
                             <button @click="open = !open" 
                                     @click.away="open = false"
-                                    class="text-slate-600 hover:text-primary transition-colors flex items-center cursor-pointer">
+                                    class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-amber-400 transition-colors flex items-center cursor-pointer">
                                 {{ g.user.username or 'Usuario' }}
                                 <svg class="w-4 h-4 ml-1" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -79,22 +80,22 @@
                                  x-transition:leave="transition ease-in duration-75"
                                  x-transition:leave-start="transform opacity-100 scale-100"
                                  x-transition:leave-end="transform opacity-0 scale-95"
-                                 class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                                 class="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-700 rounded-md shadow-lg py-1 z-50">
                                 <a href="{% if g.user.user_uuid %}/profile/{{ g.user.user_uuid }}{% else %}#{% endif %}" 
-                                   class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Mi Perfil</a>
+                                   class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600">Mi Perfil</a>
                                 <a href="{{ url_for('auth.logout') }}" 
-                                   class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Cerrar Sesión</a>
+                                   class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600">Cerrar Sesión</a>
                             </div>
                         </div>
                     {% else %}
-                        <a href="{{ url_for('auth.login') }}" class="text-slate-600 hover:text-primary transition-colors">Iniciar Sesión</a>
-                        <a href="{{ url_for('auth.register') }}" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors">Registrarse</a>
+                        <a href="{{ url_for('auth.login') }}" class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-amber-400 transition-colors">Iniciar Sesión</a>
+                        <a href="{{ url_for('auth.register') }}" class="bg-primary dark:bg-amber-500 text-white px-4 py-2 rounded-md hover:bg-amber-600 dark:hover:bg-amber-600 transition-colors">Registrarse</a>
                     {% endif %}
                 </nav>
                 
                 <!-- Mobile menu button -->
                 <div class="md:hidden">
-                    <button type="button" class="text-slate-600 hover:text-primary">
+                    <button type="button" class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-amber-400">
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
@@ -109,21 +110,77 @@
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Theme Toggle Button -->
+    <button id="theme-toggle" class="fixed bottom-4 left-4 z-50 w-12 h-12 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group">
+        <!-- Sun Icon (visible in dark mode) -->
+        <svg id="sun-icon" class="w-6 h-6 text-amber-500 hidden dark:block transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+        </svg>
+        <!-- Moon Icon (visible in light mode) -->
+        <svg id="moon-icon" class="w-6 h-6 text-slate-600 block dark:hidden transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+        </svg>
+    </button>
+
     <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200">
+    <footer class="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="text-center">
-                <p class="text-slate-600 text-sm">
+                <p class="text-slate-600 dark:text-slate-400 text-sm">
                     &copy; 2025 MeliAPP. Todos los derechos reservados.
                 </p>
                 <div class="mt-4 space-x-4">
-                    <a href="#" class="text-slate-500 hover:text-primary text-sm">Privacidad</a>
-                    <a href="#" class="text-slate-500 hover:text-primary text-sm">Términos</a>
+                    <a href="#" class="text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-amber-400 text-sm">Privacidad</a>
+                    <a href="#" class="text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-amber-400 text-sm">Términos</a>
                 </div>
             </div>
         </div>
     </footer>
 
+    <!-- Theme Toggle Script -->
+    <script>
+        // Theme management
+        const themeToggle = document.getElementById('theme-toggle');
+        const htmlRoot = document.getElementById('html-root');
+        const sunIcon = document.getElementById('sun-icon');
+        const moonIcon = document.getElementById('moon-icon');
+        
+        // Check for saved theme preference or default to light mode
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        
+        // Apply initial theme
+        if (currentTheme === 'dark') {
+            htmlRoot.classList.add('dark');
+        }
+        
+        // Theme toggle functionality
+        themeToggle.addEventListener('click', function() {
+            htmlRoot.classList.toggle('dark');
+            
+            // Save theme preference
+            if (htmlRoot.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+            
+            // Add a subtle animation effect
+            themeToggle.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                themeToggle.style.transform = 'scale(1)';
+            }, 150);
+        });
+        
+        // Add hover effect
+        themeToggle.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.05)';
+        });
+        
+        themeToggle.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    </script>
+    
     {% block extra_js %}{% endblock %}
 </body>
 </html>
