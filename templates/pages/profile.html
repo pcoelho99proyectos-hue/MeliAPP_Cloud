@@ -85,7 +85,8 @@
     </div>
 </section>
 
-<!-- SECCIÓN 4: QR del Lote Seleccionado -->
+<!-- SECCIÓN 4: QR del Lote Seleccionado - Solo para usuarios autenticados -->
+{% if g.user and g.user.user_uuid == user.id %}
 <section id="lote-qr-section" class="bg-white dark:bg-slate-800 py-8 border-b border-slate-200 dark:border-slate-700 transition-colors duration-300" style="display: none;">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-2xl font-bold text-gray-800 dark:text-slate-200 mb-2">Código QR del Lote</h2>
@@ -94,8 +95,8 @@
         <div class="flex justify-center items-center space-x-8">
             <!-- Contenedor del QR -->
             <div id="lote-qr-code-container" class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 inline-block shadow-md transition-colors duration-300">
-                <img id="lote-qr-image" src="" alt="Código QR del lote" class="w-24 h-24 mx-auto" style="display: none;">
-                <div id="lote-qr-placeholder" class="w-24 h-24 flex items-center justify-center">
+                <img id="lote-qr-image" src="" alt="Código QR del lote" class="w-12 h-12 mx-auto" style="display: none;">
+                <div id="lote-qr-placeholder" class="w-12 h-12 flex items-center justify-center">
                     <p class="text-gray-500 dark:text-slate-400">El QR aparecerá aquí</p>
                 </div>
             </div>
@@ -112,6 +113,7 @@
         </div>
     </div>
 </section>
+{% endif %}
 
 <!-- Edit Profile Button for Authenticated Users -->
 {% if g.user and g.user.user_uuid == user.id %}

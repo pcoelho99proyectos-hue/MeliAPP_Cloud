@@ -13,6 +13,7 @@ import base64
 from flask import Blueprint, render_template, request, jsonify, url_for, redirect, send_file, session
 from supabase_client import db
 from searcher import Searcher
+from auth_manager import AuthManager
 import segno
 
 logger = logging.getLogger(__name__)
@@ -97,6 +98,7 @@ def get_current_user():
         return jsonify({"success": False, "error": "Error interno del servidor"}), 500
 
 @search_bp.route('/usuario/<uuid_segment>/qr', methods=['GET'])
+@AuthManager.login_required
 def get_user_qr(uuid_segment):
     """
     Genera y devuelve un código QR que redirecciona al perfil del usuario.
@@ -106,25 +108,20 @@ def get_user_qr(uuid_segment):
     GET /api/usuario/550e8400/qr?format=json -> Devuelve un JSON con el QR en base64
     """
     try:
+        # Verificar que el usuario solo puede generar QR de su propio perfil
+        current_user_id = AuthManager.get_current_user_id()
+        if not current_user_id:
+            return jsonify({"error": "Usuario no autenticado"}), 401
+            
         if len(uuid_segment) != 8:
             return jsonify({"error": "El segmento UUID debe tener 8 caracteres"}), 400
             
-        # Buscar usuarios cuyo UUID comience con el segmento proporcionado
-        response = db.client.table('usuarios')\
-            .select('auth_user_id')\
-            .execute()
+        # Verificar que el segmento UUID corresponde al usuario autenticado
+        if not str(current_user_id).startswith(uuid_segment):
+            return jsonify({"error": "No tienes permisos para generar este QR"}), 403
             
-        if not response.data:
-            return jsonify({"error": "No hay usuarios en la base de datos"}), 404
-            
-        # Filtrar usuarios cuyo ID comience con el segmento
-        matching_users = [user for user in response.data if str(user['auth_user_id']).startswith(uuid_segment)]
-            
-        if not matching_users:
-            return jsonify({"error": "Usuario no encontrado"}), 404
-            
-        # Usar el primer usuario que coincida
-        user_id = matching_users[0]['auth_user_id']
+        # Usar el ID del usuario autenticado
+        user_id = current_user_id
         
         qr_format = request.args.get('format', 'png').lower()
         scale = int(request.args.get('scale', 10))

@@ -329,6 +329,7 @@ def gestionar_lotes_pagina():
     return render_template('pages/gestionar_lote.html')
 
 @lotes_api_bp.route('/lote/<lote_id>/qr', methods=['GET'])
+@AuthManager.login_required
 def generar_qr_lote(lote_id):
     """
     Genera y sirve un código QR para la URL de visualización de un lote específico.
@@ -336,28 +337,30 @@ def generar_qr_lote(lote_id):
     GET /api/lote/<lote_id>/qr
     """
     try:
-        # Obtener información del lote para generar la URL correcta del perfil
-        try:
-            response = db_client.client.table('origenes_botanicos').select('auth_user_id').eq('id', lote_id).execute()
-            if not response.data or len(response.data) == 0:
-                return jsonify({'success': False, 'error': 'Lote no encontrado.'}), 404
+        # Verificar autenticación del usuario actual
+        current_user_id = AuthManager.get_current_user_id()
+        if not current_user_id:
+            return jsonify({'success': False, 'error': 'Usuario no autenticado.'}), 401
             
-            auth_user_id = response.data[0].get('auth_user_id')
-            if not auth_user_id:
-                return jsonify({'success': False, 'error': 'Lote sin usuario asociado.'}), 400
-        except Exception as e:
-            # Fallback con cliente autenticado
-            auth_client = get_singleton_authenticated_client()
-            if not auth_client:
-                return jsonify({'success': False, 'error': 'Error de autenticación.'}), 401
+        # Usar cliente autenticado para respetar RLS
+        auth_client = get_singleton_authenticated_client()
+        if not auth_client:
+            return jsonify({'success': False, 'error': 'Error de autenticación.'}), 401
             
-            response = auth_client.table('origenes_botanicos').select('auth_user_id').eq('id', lote_id).execute()
-            if not response.data or len(response.data) == 0:
-                return jsonify({'success': False, 'error': 'Lote no encontrado.'}), 404
+        # Verificar que el lote pertenece al usuario autenticado
+        response = auth_client.table('origenes_botanicos').select('auth_user_id').eq('id', lote_id).execute()
+        if not response.data or len(response.data) == 0:
+            return jsonify({'success': False, 'error': 'Lote no encontrado.'}), 404
             
-            auth_user_id = response.data[0].get('auth_user_id')
-            if not auth_user_id:
-                return jsonify({'success': False, 'error': 'Lote sin usuario asociado.'}), 400
+        lote_owner_id = response.data[0].get('auth_user_id')
+        if not lote_owner_id:
+            return jsonify({'success': False, 'error': 'Lote sin usuario asociado.'}), 400
+            
+        # Verificar que el usuario actual es el propietario del lote
+        if str(lote_owner_id) != str(current_user_id):
+            return jsonify({'success': False, 'error': 'No tienes permisos para generar QR de este lote.'}), 403
+            
+        auth_user_id = current_user_id
         
         # Generar URL del perfil del usuario con el lote específico
         base_url = request.host_url
