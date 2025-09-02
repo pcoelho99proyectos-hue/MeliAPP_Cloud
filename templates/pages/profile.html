@@ -8,12 +8,12 @@
 <section class="bg-gradient-to-r from-primary to-amber-600 dark:from-amber-600 dark:to-amber-700">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {% if user or contact_info %}
-        <div class="flex items-center justify-center space-x-8">
+        <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-8">
             <!-- Avatar -->
             <div class="relative flex-shrink-0">
                 <div class="w-24 h-24 rounded-full border-4 border-white dark:border-slate-200 shadow-lg bg-gradient-to-br from-primary to-amber-600 dark:from-amber-500 dark:to-amber-600 flex items-center justify-center">
                     <span class="text-3xl font-bold text-white">
-                        {{ (user.nombre_completo or user.nombre or user.username or 'U')[:2].upper() }}
+                        {{ (contact_info.nombre_completo or user.nombre or 'Usuario')[:2].upper() }}
                     </span>
                 </div>
                 <div class="absolute bottom-0 right-0 w-6 h-6 bg-green-500 dark:bg-green-400 rounded-full border-2 border-white dark:border-slate-200 flex items-center justify-center">
@@ -23,13 +23,13 @@
             
             <!-- Nombre -->
             <div class="text-center">
-                <h1 class="text-3xl font-bold text-white">{{ contact_info.nombre_completo or user.nombre or 'Usuario' }}</h1>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white break-words">{{ contact_info.nombre_completo or user.nombre or 'Usuario' }}</h1>
             </div>
             
             <!-- Rol y Ubicación -->
             <div class="text-center">
-                <p class="text-xl text-amber-100 dark:text-amber-200 font-semibold">{{ user.role or 'Apicultor' }}</p>
-                <p class="text-sm text-amber-200 dark:text-amber-300 mt-1">
+                <p class="text-lg sm:text-xl text-amber-100 dark:text-amber-200 font-semibold">{{ user.role or 'Apicultor' }}</p>
+                <p class="text-xs sm:text-sm text-amber-200 dark:text-amber-300 mt-1 break-words">
                     {% if user.comuna and user.region %}
                         {{ user.comuna }}, {{ user.region }}
                     {% elif user.comuna %}
@@ -57,7 +57,7 @@
 </section>
 
 <!-- SECCIÓN 2: Gráfico Botánico - Listón Horizontal Completo -->
-<section class="bg-white dark:bg-slate-800 py-8 transition-colors duration-300">
+<section class="bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 dark:from-slate-800 dark:via-amber-900/20 dark:to-slate-800 py-8 transition-colors duration-300">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div id="botanical-chart-container" 
              class="w-full"
@@ -73,10 +73,10 @@
 </section>
 
 <!-- SECCIÓN 3: Lotes - Listón Horizontal Inferior -->
-<section class="bg-gray-50 dark:bg-slate-900 py-6 transition-colors duration-300">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div id="lotes-carousel-container" class="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-6 transition-colors duration-300" data-user-id="{{ user.id if user else 'None' }}">
-            <h3 class="text-xl font-bold text-gray-800 dark:text-slate-200 mb-4 text-center">Mis Lotes</h3>
+<section class="bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 dark:from-slate-800 dark:via-amber-900/20 dark:to-slate-800 py-8 border-b border-slate-200 dark:border-slate-700 transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h3 class="text-2xl font-bold text-gray-800 dark:text-slate-200 mb-4">Mis Lotes</h3>
+        <div id="lotes-carousel-container" class="transition-colors duration-300" data-user-id="{{ user.id if user else 'None' }}">
             <div id="lotes-carousel" class="flex justify-center overflow-x-auto space-x-3 py-2">
                 <!-- Los botones de los lotes se insertarán aquí dinámicamente -->
                 <p class="text-gray-500 dark:text-slate-400 text-sm">Cargando lotes...</p>
@@ -94,10 +94,10 @@
         
         <div class="flex justify-center items-center space-x-8">
             <!-- Contenedor del QR -->
-            <div id="lote-qr-code-container" class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 inline-block shadow-md transition-colors duration-300">
-                <img id="lote-qr-image" src="" alt="Código QR del lote" class="w-12 h-12 mx-auto" style="display: none;">
-                <div id="lote-qr-placeholder" class="w-12 h-12 flex items-center justify-center">
-                    <p class="text-gray-500 dark:text-slate-400">El QR aparecerá aquí</p>
+            <div id="lote-qr-code-container" class="bg-gray-50 dark:bg-slate-700 rounded-lg p-6 inline-block shadow-md transition-colors duration-300">
+                <img id="lote-qr-image" src="" alt="Código QR del lote" class="w-36 h-36 mx-auto" style="display: none;">
+                <div id="lote-qr-placeholder" class="w-16 h-16 flex items-center justify-center">
+                    <p class="text-gray-500 dark:text-slate-400 text-sm">El QR aparecerá aquí</p>
                 </div>
             </div>
 
@@ -281,32 +281,26 @@
 
             <!-- Sidebar -->
             <div class="lg:col-span-1">
-                <!-- QR Code -->
+                <!-- QR Code - Solo para usuarios autenticados -->
+                {% if g.user and g.user.user_uuid == user.id %}
                 <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 mb-6 transition-colors duration-300">
                     <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-200 mb-4 text-center">Código QR</h3>
                     <div class="text-center">
                         <div class="bg-slate-50 dark:bg-slate-700 rounded-lg p-6 inline-block transition-colors duration-300">
-                            {% if user %}
                             <img id="qr-image" src="/api/usuario/{{ user.id[:8] }}/qr?format=png" alt="QR Code" class="w-40 h-40 mx-auto">
                             <p class="text-sm text-slate-600 dark:text-slate-400 mt-2">Escanea para ver perfil</p>
-                            {% else %}
-                            <div class="w-40 h-40 bg-slate-200 dark:bg-slate-600 rounded-lg flex items-center justify-center mx-auto">
-                                <span class="text-slate-500 dark:text-slate-400 text-sm">QR no disponible</span>
-                            </div>
-                            {% endif %}
                         </div>
                         <div class="space-y-2 mt-4">
-                            {% if user %}
                             <button onclick="generateQR()" class="w-full bg-blue-500 dark:bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors text-sm font-medium">
                                 Generar QR
                             </button>
                             <button onclick="downloadQR()" class="w-full bg-green-500 dark:bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-600 dark:hover:bg-green-700 transition-colors text-sm font-medium">
                                 Descargar QR
                             </button>
-                            {% endif %}
                         </div>
                     </div>
                 </div>
+                {% endif %}
 
                 <!-- Quick Actions -->
                 <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 transition-colors duration-300">

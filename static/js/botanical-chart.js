@@ -59,7 +59,7 @@ class BotanicalChart {
         console.log('🖼️ Rendering chart with', this.data.length, 'items');
 
         let html = `
-            <div class="botanical-chart bg-white rounded-lg shadow-md p-4">
+            <div class="botanical-chart bg-gradient-to-br from-white via-amber-50/50 to-yellow-100/30 dark:from-slate-600 dark:via-amber-700/50 dark:to-slate-500 rounded-lg shadow-md p-4 border border-amber-200/30 dark:border-amber-700/20">
                 <div class="space-y-3">
         `;
 

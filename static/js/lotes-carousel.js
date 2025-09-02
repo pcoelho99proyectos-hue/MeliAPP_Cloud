@@ -67,7 +67,7 @@ function renderLotesCarousel(lotes) {
     lotes.forEach(lote => {
         const loteButton = document.createElement('button');
         loteButton.dataset.loteId = lote.id;
-        loteButton.className = 'flex-shrink-0 w-20 h-14 bg-white rounded-lg shadow-md p-1 flex flex-col items-center justify-center text-center hover:shadow-lg hover:bg-yellow-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500';
+        loteButton.className = 'flex-shrink-0 w-20 h-14 bg-gradient-to-br from-white via-amber-50/70 to-yellow-100/50 dark:from-slate-600 dark:via-amber-800/20 dark:to-slate-600 rounded-lg shadow-md p-1 flex flex-col items-center justify-center text-center hover:shadow-lg hover:from-yellow-50 hover:to-amber-100 dark:hover:from-slate-500 dark:hover:to-amber-700/30 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 border border-amber-200/40 dark:border-amber-600/30';
         loteButton.type = 'button';
 
         loteButton.innerHTML = `
@@ -78,6 +78,14 @@ function renderLotesCarousel(lotes) {
         loteButton.addEventListener('click', handleLoteButtonClick);
         carousel.appendChild(loteButton);
     });
+    
+    // Scroll to the first element after rendering
+    setTimeout(() => {
+        if (carousel.firstElementChild) {
+            carousel.scrollLeft = 0;
+            carousel.firstElementChild.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+        }
+    }, 100);
 }
 
 async function handleLoteButtonClick(event) {
