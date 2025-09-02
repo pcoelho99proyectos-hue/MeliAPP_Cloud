@@ -79,13 +79,32 @@ function renderLotesCarousel(lotes) {
         carousel.appendChild(loteButton);
     });
     
-    // Scroll to the first element after rendering
-    setTimeout(() => {
+    // Force scroll to beginning - Enhanced mobile fix
+    const forceScrollToStart = () => {
         if (carousel.firstElementChild) {
+            // Immediate scroll reset
             carousel.scrollLeft = 0;
-            carousel.firstElementChild.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+            
+            // Additional mobile-specific fixes
+            requestAnimationFrame(() => {
+                carousel.scrollTo({ left: 0, behavior: 'auto' });
+                
+                // Force scroll with multiple attempts for mobile
+                setTimeout(() => {
+                    carousel.scrollLeft = 0;
+                    carousel.scrollTo(0, 0);
+                }, 50);
+                
+                setTimeout(() => {
+                    carousel.scrollLeft = 0;
+                }, 100);
+            });
         }
-    }, 100);
+    };
+    
+    // Execute immediately and with delay for mobile
+    forceScrollToStart();
+    setTimeout(forceScrollToStart, 300);
 }
 
 async function handleLoteButtonClick(event) {
