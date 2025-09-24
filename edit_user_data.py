@@ -80,16 +80,20 @@ def handle_ubicaciones():
             if not location_id:
                 return jsonify({"success": False, "error": "ID de ubicación requerido"}), 400
             
-            # Verificar que la ubicación pertenece al usuario
-            supabase = SupabaseClient()
-            ubicaciones_response = supabase.client.table('ubicaciones').select('*').eq('auth_user_id', user_uuid).execute()
-            ubicaciones = ubicaciones_response.data if ubicaciones_response.data else []
+            # Usar DatabaseModifier para verificar y eliminar con RLS
+            db_modifier = DatabaseModifier()
+            ubicaciones = db_modifier.get_records('ubicaciones', user_uuid)
             ubicacion = next((u for u in ubicaciones if u.get('id') == location_id), None)
             
             if not ubicacion:
                 return jsonify({"success": False, "error": "Ubicación no encontrada o no pertenece al usuario"}), 404
             
-            result_response = supabase.client.table('ubicaciones').delete().eq('id', location_id).eq('auth_user_id', user_uuid).execute()
+            # Usar cliente autenticado para eliminar
+            auth_client = AuthManager.get_authenticated_client()
+            if not auth_client:
+                return jsonify({"success": False, "error": "Error de autenticación"}), 401
+            
+            result_response = auth_client.table('ubicaciones').delete().eq('id', location_id).eq('auth_user_id', user_uuid).execute()
             success = bool(result_response.data)
             result = {"success": success, "message": "Ubicación eliminada exitosamente" if success else "Error al eliminar"}
             status_code = 200 if success else 400
@@ -115,7 +119,6 @@ def handle_ubicaciones():
             
             # Preparar datos para inserción - solo columnas existentes
             insert_data = {
-                'auth_user_id': user_uuid,
                 'nombre': str(processed_data['nombre']).strip(),
                 'latitud': float(processed_data['latitud']),
                 'longitud': float(processed_data['longitud']),
@@ -123,10 +126,9 @@ def handle_ubicaciones():
                 'descripcion': str(processed_data.get('descripcion', '')).strip()
             }
             
-            result_response = supabase.client.table('ubicaciones').insert(insert_data).execute()
-            success = bool(result_response.data)
-            result = {"success": success, "data": result_response.data[0] if success else None}
-            status_code = 201 if success else 400
+            # Usar DatabaseModifier que maneja RLS correctamente
+            db_modifier = DatabaseModifier()
+            result, status_code = db_modifier.insert_record('ubicaciones', insert_data, user_uuid)
             
             if result and isinstance(result, dict) and result.get('success'):
                 result['profile_url'] = f"/profile/{user_uuid}"
@@ -164,6 +166,7 @@ def handle_ubicaciones():
             
             # Preparar datos para actualización - solo columnas existentes
             update_data = {
+                'id': location_id,  # Incluir ID para la actualización
                 'nombre': str(processed_data['nombre']).strip(),
                 'latitud': float(processed_data['latitud']),
                 'longitud': float(processed_data['longitud']),
@@ -171,10 +174,9 @@ def handle_ubicaciones():
                 'descripcion': str(processed_data.get('descripcion', '')).strip()
             }
             
-            result_response = supabase.client.table('ubicaciones').update(update_data).eq('id', location_id).eq('auth_user_id', user_uuid).execute()
-            success = bool(result_response.data)
-            result = {"success": success, "data": result_response.data[0] if success else None}
-            status_code = 200 if success else 400
+            # Usar DatabaseModifier que maneja RLS correctamente
+            db_modifier = DatabaseModifier()
+            result, status_code = db_modifier.update_record('ubicaciones', update_data, user_uuid)
             
             if result and isinstance(result, dict) and result.get('success'):
                 result['profile_url'] = f"/profile/{user_uuid}"
@@ -203,33 +205,64 @@ def get_usuario_data():
         # Log para debugging
         logger.info(f"Usuario UUID obtenido: {user_uuid}")
         
-        # Obtener datos del usuario
-        supabase = SupabaseClient()
+        # Usar cliente autenticado para respetar RLS también en lectura
+        auth_client = AuthManager.get_authenticated_client()
+        if not auth_client:
+            return jsonify({"success": False, "error": "Error de autenticación"}), 401
         
         # Obtener datos del usuario
-        usuario_response = supabase.client.table('usuarios').select('*').eq('auth_user_id', user_uuid).single().execute()
+        usuario_response = auth_client.table('usuarios').select('*').eq('auth_user_id', user_uuid).single().execute()
         usuario = usuario_response.data if usuario_response.data else None
         if not usuario:
             return jsonify({"success": False, "error": "Usuario no encontrado en la base de datos"}), 404
             
         # Obtener información de contacto
-        info_contacto_response = supabase.client.table('info_contacto').select('*').eq('auth_user_id', user_uuid).single().execute()
+        info_contacto_response = auth_client.table('info_contacto').select('*').eq('auth_user_id', user_uuid).single().execute()
         info_contacto = info_contacto_response.data if info_contacto_response.data else {}
         
         # Obtener ubicaciones
-        ubicaciones_response = supabase.client.table('ubicaciones').select('*').eq('auth_user_id', user_uuid).execute()
+        ubicaciones_response = auth_client.table('ubicaciones').select('*').eq('auth_user_id', user_uuid).execute()
         ubicaciones = ubicaciones_response.data if ubicaciones_response.data else []
         
         return jsonify({
             "success": True,
             "usuario": usuario,
             "info_contacto": info_contacto or {},
-            "ubicaciones": ubicaciones or {},
+            "ubicaciones": ubicaciones or [],
             "id": user_uuid  # UUID completo del usuario autenticado
         })
         
     except Exception as e:
         logger.error(f"Error obteniendo datos de usuario: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@edit_bp.route('/api/data/ubicaciones', methods=['GET'])
+@AuthManager.login_required
+def get_ubicaciones_data():
+    """Obtener ubicaciones del usuario autenticado para el dropdown de eliminación"""
+    try:
+        # Obtener el UUID del usuario autenticado desde g.user
+        user_uuid = g.user.get('id')
+        if not user_uuid:
+            return jsonify({"success": False, "error": "Usuario no autenticado"}), 401
+            
+        # Usar cliente autenticado para respetar RLS
+        auth_client = AuthManager.get_authenticated_client()
+        if not auth_client:
+            return jsonify({"success": False, "error": "Error de autenticación"}), 401
+        
+        # Obtener ubicaciones
+        ubicaciones_response = auth_client.table('ubicaciones').select('*').eq('auth_user_id', user_uuid).execute()
+        ubicaciones = ubicaciones_response.data if ubicaciones_response.data else []
+        
+        return jsonify({
+            "success": True,
+            "ubicaciones": ubicaciones
+        })
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo ubicaciones: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 

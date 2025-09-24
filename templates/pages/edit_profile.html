@@ -710,7 +710,7 @@ function displayUbicaciones(ubicaciones) {
                     <h4 class="font-semibold text-gray-900">${ubicacion.nombre || 'Sin nombre'}</h4>
                     <p class="text-sm text-gray-600 mt-1">${ubicacion.descripcion || 'Sin descripción'}</p>
                     <div class="mt-2">
-                        <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">${ubicacion.gmaps_plus_code}</span>
+                        <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">Lat: ${ubicacion.latitud}, Lng: ${ubicacion.longitud}</span>
                         <a href="https://maps.google.com/?q=${ubicacion.latitud},${ubicacion.longitud}" 
                            target="_blank" 
                            class="text-xs text-amber-600 hover:text-amber-700 ml-2">
@@ -771,14 +771,7 @@ async function submitUbicacionForm(event) {
         data[key] = value;
     });
     
-    // Limpiar Plus Code (remover texto adicional)
-    if (data.gmaps_plus_code) {
-        // Extraer solo el Plus Code (ej: "6RXC+Q7C" de "6RXC+Q7C Colluqueo")
-        const plusCodeMatch = data.gmaps_plus_code.match(/([23456789CFGHJMPQRVWX]{8,}[+]?[23456789CFGHJMPQRVWX]{2,})/i);
-        if (plusCodeMatch) {
-            data.gmaps_plus_code = plusCodeMatch[1].toUpperCase();
-        }
-    }
+    // El backend se encarga del procesamiento de Plus Code
     
     console.log(' Enviando datos:', data);
     
@@ -931,34 +924,20 @@ async function confirmDeleteLocation() {
     }
 }
 
-// Mostrar ubicaciones en la lista
-function displayUbicaciones(ubicaciones) {
-    const container = document.getElementById('ubicaciones-list');
-    
-    if (!ubicaciones || ubicaciones.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-8 text-gray-500">
-                <i class="fas fa-map-marker-alt text-4xl mb-2"></i>
-                <p>No hay ubicaciones registradas</p>
-            </div>
-        `;
-        return;
+
+// Función para recargar datos de una pestaña específica
+function loadTabData(tabName) {
+    if (tabName === 'ubicaciones') {
+        // Recargar ubicaciones desde el servidor
+        loadAllData().then(() => {
+            populateTabData('ubicaciones');
+        });
+    } else if (tabName === 'info_contacto') {
+        // Recargar datos de contacto
+        loadAllData().then(() => {
+            populateTabData('info_contacto');
+        });
     }
-    
-    container.innerHTML = ubicaciones.map(ubicacion => `
-        <div class="bg-white border border-gray-200 rounded-lg p-4 mb-3">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h4 class="font-semibold text-gray-900">${ubicacion.nombre}</h4>
-                    <p class="text-sm text-gray-600">Lat: ${ubicacion.latitud}, Lng: ${ubicacion.longitud}</p>
-                    ${ubicacion.descripcion ? `<p class="text-sm text-gray-500 mt-1">${ubicacion.descripcion}</p>` : ''}
-                </div>
-                <div class="text-xs text-gray-400">
-                    ${ubicacion.norma_geo || 'WGS84'}
-                </div>
-            </div>
-        </div>
-    `).join('');
 }
 
 // Navigate to profile using already loaded user ID
