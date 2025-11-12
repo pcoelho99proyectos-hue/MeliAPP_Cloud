@@ -151,6 +151,11 @@
             <p>Inicia sesión con tu cuenta de Supabase</p>
         </div>
         
+        <!-- Mensaje de confirmación pendiente -->
+        <div id="confirm-message" class="alert alert-success" style="display: none;">
+            📧 <strong>¡Cuenta creada!</strong> Por favor confirma tu email antes de iniciar sesión. Revisa tu bandeja de entrada (y spam).
+        </div>
+        
         <div id="alert-container"></div>
         
         <form id="login-form">
@@ -214,6 +219,19 @@
     const form = document.getElementById('login-form');
     const alertContainer = document.getElementById('alert-container');
     
+    // Mostrar mensaje de confirmación si viene desde registro
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('message') === 'confirm_email') {
+        const confirmMessage = document.getElementById('confirm-message');
+        if (confirmMessage) {
+            confirmMessage.style.display = 'block';
+            // Ocultar después de 10 segundos
+            setTimeout(() => {
+                confirmMessage.style.display = 'none';
+            }, 10000);
+        }
+    }
+    
     function showAlert(message, type = 'error') {
         alertContainer.innerHTML = '';
         const alert = document.createElement('div');
@@ -242,7 +260,8 @@
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
             
-            const response = await fetch('/api/login', {
+            // Usar endpoint API REST
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -253,12 +272,17 @@
             const result = await response.json();
             
             if (result.success) {
-                showAlert('Inicio de sesión exitoso', 'success');
+                showAlert('✅ Inicio de sesión exitoso', 'success');
                 setTimeout(() => {
-                    window.location.href = result.redirect_url || '/';
+                    window.location.href = '/';
                 }, 1000);
             } else {
-                showAlert(result.error || 'Error al iniciar sesión');
+                // Mensaje especial para email no confirmado
+                if (result.error && result.error.includes('Email not confirmed')) {
+                    showAlert('📧 Debes confirmar tu email antes de iniciar sesión. Revisa tu bandeja de entrada.');
+                } else {
+                    showAlert(result.error || 'Error al iniciar sesión');
+                }
             }
         } catch (error) {
             showAlert('Error de conexión: ' + error.message);
@@ -270,9 +294,28 @@
         }
     });
 
-    // Función para iniciar sesión con Google OAuth
-    function loginWithGoogle() {
-        window.location.href = "/api/auth/google";
+    // Función para iniciar sesión con Google OAuth (API REST)
+    async function loginWithGoogle() {
+        try {
+            // Llamar a API REST para obtener URL de OAuth
+            const response = await fetch('/api/auth/google', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (result.success && result.url) {
+                // Redirigir a Google OAuth
+                window.location.href = result.url;
+            } else {
+                showAlert('Error al iniciar OAuth con Google');
+            }
+        } catch (error) {
+            showAlert('Error de conexión con OAuth: ' + error.message);
+        }
     }
 </script>
 {% endblock %}

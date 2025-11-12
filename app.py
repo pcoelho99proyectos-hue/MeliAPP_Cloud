@@ -56,9 +56,29 @@ DEBUG = True  # Habilitado para debug del registro
 PORT = int(os.environ.get('PORT', 3000))
 
 # Log de inicio
-logger.info("=== INICIANDO MELIAPP v3 CON DEBUG HABILITADO ===")
-logger.info(f"Puerto configurado: {PORT}")
-logger.info(f"Debug mode: {DEBUG}")
+logger.info("=" * 70)
+logger.info("  🍯 MELIAPP v3.0 - API REST")
+logger.info("=" * 70)
+logger.info(f"  📍 Puerto: {PORT}")
+logger.info(f"  🔧 Debug: {DEBUG}")
+logger.info(f"  🌐 Base URL: http://localhost:{PORT}")
+logger.info(f"  📱 API REST: Listo para apps móviles (Flutter, React Native)")
+logger.info(f"  ✅ Autenticación: Email + OAuth Google")
+logger.info(f"  📧 Verificación: Activada (Resend)")
+logger.info(f"  🔐 Sesión: Cookies HTTP-only")
+logger.info("=" * 70)
+logger.info("  Endpoints principales:")
+logger.info("    • POST /api/auth/register - Registro con verificación")
+logger.info("    • POST /api/auth/login - Login")
+logger.info("    • GET  /api/auth/session - Verificar sesión")
+logger.info("    • POST /api/auth/google - OAuth Google")
+logger.info("    • GET  /api/profile/me - Perfil completo")
+logger.info("    • POST /api/edit/usuarios - Editar usuario")
+logger.info("    • GET  /api/lotes/{uuid} - Obtener lotes")
+logger.info("=" * 70)
+logger.info("  📚 Documentación: /docs/API_REST_VERIFICACION.md")
+logger.info("  🧪 Testing: Ver ejemplos con curl en documentación")
+logger.info("=" * 70)
 
 # Configuración para producción
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
@@ -95,12 +115,12 @@ from supabase_client_routes import supabase_bp
 from searcher_routes import search_bp, search_web_bp
 from data_tables_routes import data_tables_bp
 from lotes_routes import lotes_api_bp, lotes_web_bp, lotes_debug_bp
-from web_routes import web_bp
+from web_routes import web_bp  # Contiene TODAS las rutas web (home, login, register, logout)
 from profile_routes import profile_bp
 
 # Registrar blueprints
-app.register_blueprint(web_bp)
-app.register_blueprint(auth_bp)
+app.register_blueprint(web_bp)  # Rutas web (HTML): /, /login, /register, /logout
+app.register_blueprint(auth_bp)  # API REST de autenticación: /api/auth/*
 app.register_blueprint(botanical_bp)
 app.register_blueprint(supabase_bp)
 app.register_blueprint(search_bp)

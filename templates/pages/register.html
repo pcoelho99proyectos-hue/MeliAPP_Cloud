@@ -37,7 +37,7 @@
                         <input type="email" id="email" name="email" required 
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                                placeholder="tu@email.com">
-                        <p class="mt-1 text-xs text-gray-500">Te enviaremos un correo de confirmación</p>
+                        <p class="mt-1 text-xs text-gray-500">📧 Te enviaremos un correo de confirmación obligatoria</p>
                     </div>
 
                     <!-- Confirmar Email -->
@@ -138,7 +138,7 @@
                 <div class="mt-6 text-center">
                     <p class="text-sm text-gray-600">
                         ¿Ya tienes una cuenta?
-                        <a href="{{ url_for('auth.login') }}" class="font-medium text-amber-600 hover:text-amber-500">Inicia sesión aquí</a>
+                        <a href="/login" class="font-medium text-amber-600 hover:text-amber-500">Inicia sesión aquí</a>
                     </p>
                 </div>
             </div>
@@ -306,12 +306,11 @@ form.addEventListener('submit', async (e) => {
             username: nombreCompletoValue, // Username = Nombre completo
             email: formData.get('email'),
             password: formData.get('password'),
-            nombre_completo: nombreCompletoValue,
-            telefono: '', // Campo no requerido
             role: formData.get('role')
         };
         
-        const response = await fetch("{{ url_for('auth.register') }}", {
+        // Usar endpoint API REST
+        const response = await fetch('/api/auth/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -321,16 +320,25 @@ form.addEventListener('submit', async (e) => {
         
         const result = await response.json();
         
-        if (response.ok) {
-            showSuccess('¡Cuenta creada exitosamente! Redirigiendo a completar perfil...');
+        if (result.success) {
+            // SIEMPRE requiere confirmación de email
+            showSuccess('✅ ¡Cuenta creada exitosamente! Por favor revisa tu correo electrónico y haz clic en el enlace de confirmación para activar tu cuenta.');
+            
+            // Redirigir a login después de 5 segundos
             setTimeout(() => {
-                window.location.href = '/edit-profile';
-            }, 2000);
+                window.location.href = '/login?message=confirm_email';
+            }, 5000);
         } else {
-            showError(result.error || 'Error al crear la cuenta');
+            // Manejar rate limit específicamente
+            if (result.error && result.error.includes('límite de intentos')) {
+                showError('⏳ ' + result.error);
+            } else {
+                showError(result.error || 'Error al crear la cuenta');
+            }
         }
     } catch (error) {
         showError('Error de conexión. Por favor, intenta de nuevo.');
+        console.error('Error en registro:', error);
     } finally {
         submitBtn.disabled = false;
         submitText.classList.remove('hidden');
@@ -338,9 +346,29 @@ form.addEventListener('submit', async (e) => {
     }
 });
 
-// Registro con Google
-function loginWithGoogle() {
-    window.location.href = "{{ url_for('auth.api_google_auth') }}";
+// Registro con Google OAuth (API REST)
+async function loginWithGoogle() {
+    try {
+        // Llamar a API REST para obtener URL de OAuth
+        const response = await fetch('/api/auth/google', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.url) {
+            // Redirigir a Google OAuth
+            window.location.href = result.url;
+        } else {
+            showError('Error al iniciar registro con Google');
+        }
+    } catch (error) {
+        showError('Error de conexión con OAuth: ' + error.message);
+        console.error('Error en Google OAuth:', error);
+    }
 }
 </script>
 {% endblock %}

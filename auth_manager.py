@@ -77,11 +77,19 @@ class GoogleOAuth:
         return None
     
     def handle_callback(self, code):
-        """Maneja el callback OAuth y crea/actualiza usuario"""
+        """
+        Maneja el callback OAuth con verificación de email.
+        
+        Este método ahora sigue el mismo flujo de verificación que el registro manual:
+        1. Verifica que el email esté confirmado por el proveedor (Google)
+        2. Usa initialize_user_tables_on_confirmation para crear las tablas
+        3. Solo crea sesión si el email está verificado
+        """
         try:
-            logger.info("Procesando callback OAuth")
+            logger.info("=== INICIO CALLBACK OAUTH GOOGLE ===")
             
             if not code:
+                logger.error("❌ Código de autorización faltante")
                 return {
                     'success': False,
                     'error': 'Código de autorización requerido',
@@ -89,11 +97,13 @@ class GoogleOAuth:
                 }
             
             # Intercambiar código por sesión
+            logger.info("🔄 Intercambiando código por sesión...")
             response = db.client.auth.exchange_code_for_session({
                 'auth_code': code
             })
             
             if not response or not hasattr(response, 'user') or not response.user:
+                logger.error("❌ Error en respuesta de autenticación")
                 return {
                     'success': False,
                     'error': 'Error en autenticación',
@@ -101,22 +111,70 @@ class GoogleOAuth:
                 }
             
             user = response.user
-            logger.info(f"Usuario autenticado: {user.email}")
+            logger.info(f"👤 Usuario OAuth recibido: {user.email}")
+            logger.info(f"📧 Email verificado por proveedor: {user.email_confirmed_at is not None}")
             
-            # Crear o actualizar usuario en BD
-            user_db_id = self._create_or_update_user(user)
+            # VERIFICACIÓN CRÍTICA: El email debe estar verificado por el proveedor OAuth
+            if not user.email_confirmed_at:
+                logger.error(f"❌ Email no verificado por proveedor OAuth: {user.email}")
+                return {
+                    'success': False,
+                    'error': 'El email no ha sido verificado por el proveedor de autenticación',
+                    'redirect_url': '/register?error=email_not_verified'
+                }
             
-            # Crear sesión
-            self._create_session(user, user_db_id, response.session)
+            logger.info(f"✅ Email verificado por {self.provider.upper()}: {user.email}")
             
-            return {
-                'success': True,
-                'redirect_url': '/edit-profile',
-                'user': user
-            }
+            # Verificar si el usuario ya existe en nuestras tablas
+            auth_user_id = str(user.id)
+            user_check = db.client.table('usuarios')\
+                .select('auth_user_id')\
+                .eq('auth_user_id', auth_user_id)\
+                .maybe_single()\
+                .execute()
+            
+            if user_check and user_check.data:
+                # Usuario existente - solo crear sesión
+                logger.info(f"👤 Usuario existente encontrado: {user.email}")
+                self._create_session(user, auth_user_id, response.session)
+                
+                return {
+                    'success': True,
+                    'redirect_url': '/',
+                    'user': user
+                }
+            else:
+                # Usuario nuevo - usar el mismo método de inicialización que el registro manual
+                logger.info(f"🆕 Usuario nuevo de OAuth, inicializando tablas...")
+                
+                user_metadata = user.user_metadata or {}
+                initialization_success = AuthManager.initialize_user_tables_on_confirmation(
+                    auth_user_id,
+                    user.email,
+                    user_metadata
+                )
+                
+                if initialization_success:
+                    logger.info(f"✅ Tablas de usuario OAuth inicializadas exitosamente: {user.email}")
+                    
+                    # Crear sesión después de inicialización exitosa
+                    self._create_session(user, auth_user_id, response.session)
+                    
+                    return {
+                        'success': True,
+                        'redirect_url': '/edit-profile',
+                        'user': user
+                    }
+                else:
+                    logger.error(f"❌ Error inicializando tablas para usuario OAuth: {user.email}")
+                    return {
+                        'success': False,
+                        'error': 'Error al crear el perfil de usuario',
+                        'redirect_url': '/register?error=initialization_failed'
+                    }
             
         except Exception as e:
-            logger.error(f"Error en callback OAuth: {str(e)}")
+            logger.error(f"❌ Excepción en callback OAuth: {str(e)}")
             return {
                 'success': False,
                 'error': 'Error en el proceso de autenticación',
@@ -592,7 +650,7 @@ class AuthManager:
     def initialize_user_tables_on_confirmation(auth_user_id: str, email: str, user_metadata: dict) -> bool:
         """
         Inicializa las tablas de usuario después de la confirmación de email.
-        Usa la función de base de datos para garantizar consistencia.
+        Crea directamente los registros en usuarios e info_contacto.
         
         Args:
             auth_user_id: ID del usuario en auth.users
@@ -610,28 +668,86 @@ class AuthManager:
                 logger.error("No se pudo obtener el service client")
                 return False
             
-            full_name = user_metadata.get('full_name', '')
+            full_name = user_metadata.get('full_name', email.split('@')[0])
             company = user_metadata.get('company', '')
+            role = user_metadata.get('role', 'regular')
             
             logger.info(f"Inicializando tablas para usuario confirmado: {email}")
+            logger.info(f"Datos: full_name='{full_name}', company='{company}', role='{role}'")
             
-            # Llamar a la función de base de datos que maneja toda la inicialización
-            result = service_client.rpc('initialize_user_on_confirmation', {
-                'user_id': auth_user_id,
-                'user_email': email,
-                'full_name': full_name,
-                'company': company
-            }).execute()
+            # Verificar si el usuario ya existe
+            logger.info(f"Verificando existencia de usuario en tabla usuarios...")
+            user_exists = False
+            try:
+                # Usar select sin maybe_single para mayor robustez
+                existing_check = service_client.table('usuarios')\
+                    .select('auth_user_id')\
+                    .eq('auth_user_id', auth_user_id)\
+                    .execute()
+                
+                logger.info(f"Resultado de verificación: {existing_check}")
+                
+                if existing_check and hasattr(existing_check, 'data') and existing_check.data and len(existing_check.data) > 0:
+                    logger.info(f"✅ Usuario ya existe en tabla usuarios: {email}")
+                    return True
+                
+                logger.info(f"Usuario NO existe en tabla usuarios (verificación exitosa), procediendo con inicialización...")
+            except Exception as check_error:
+                logger.warning(f"⚠️ Error verificando usuario existente: {check_error}")
+                logger.warning(f"Tipo de error: {type(check_error).__name__}")
+                logger.info("Continuando con creación asumiendo que usuario no existe...")
+                # Continuar con la creación
             
-            if result.data:
-                logger.info(f"Usuario {email} inicializado exitosamente usando función de BD")
-                return True
-            else:
-                logger.error(f"La función de BD retornó False para usuario {email}")
+            # 1. Crear registro en tabla usuarios
+            new_user = {
+                'auth_user_id': auth_user_id,
+                'username': full_name,  # Username = nombre completo
+                'tipo_usuario': role,
+                'role': role[:50] if role else 'regular',  # Truncar a 50 chars
+                'status': 'active',
+                'activo': True
+            }
+            
+            logger.info(f"Creando usuario en tabla usuarios: {new_user}")
+            try:
+                user_result = service_client.table('usuarios').insert(new_user).execute()
+                
+                if not user_result or not hasattr(user_result, 'data') or not user_result.data or len(user_result.data) == 0:
+                    logger.error(f"❌ Error creando usuario en tabla usuarios para {email}")
+                    logger.error(f"Respuesta de Supabase: {user_result}")
+                    return False
+                
+                logger.info(f"✅ Usuario creado en tabla usuarios: {email}")
+            except Exception as insert_error:
+                logger.error(f"❌ Excepción creando usuario en tabla usuarios: {insert_error}")
+                logger.error(f"Tipo de error: {type(insert_error).__name__}")
                 return False
             
+            # 2. Crear registro en info_contacto
+            contact_info = {
+                'auth_user_id': auth_user_id,
+                'correo_principal': email,
+                'nombre_completo': full_name,
+                'nombre_empresa': company if company else None
+            }
+            
+            logger.info(f"Creando registro en info_contacto: {contact_info}")
+            contact_result = service_client.table('info_contacto').insert(contact_info).execute()
+            
+            if not contact_result.data or len(contact_result.data) == 0:
+                logger.warning(f"⚠️ Error creando info_contacto para {email}, pero usuario creado")
+                # No fallar si solo falla info_contacto, el usuario ya está creado
+            else:
+                logger.info(f"✅ Registro creado en info_contacto para: {email}")
+            
+            logger.info(f"✅ Inicialización completa exitosa para: {email}")
+            return True
+            
         except Exception as e:
-            logger.error(f"Error inicializando tablas para usuario {email}: {str(e)}")
+            logger.error(f"❌ Error inicializando tablas para usuario {email}: {str(e)}")
+            logger.error(f"Detalles del error: {type(e).__name__}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return False
 
 
@@ -785,77 +901,100 @@ class AuthManager:
                     "status_code": 400
                 }
             
-            # Crear usuario en Supabase Auth con confirmación de email deshabilitada
-            logger.info("Validaciones básicas pasadas, creando usuario en Supabase Auth")
-            auth_response = db.client.auth.sign_up({
-                "email": email,
-                "password": password,
-                "options": {
-                    "data": {
-                        "full_name": full_name,
-                        "company": company,
-                        "email": email,
-                        "role": role
-                    },
-                    "email_confirm": False  # Deshabilitar confirmación de email
-                }
-            })
+            # Obtener BASE_URL para el callback de confirmación
+            from app import get_base_url
+            base_url = get_base_url()
+            callback_url = f"{base_url}/auth/confirm"
             
-            logger.info(f"Respuesta de Supabase Auth: {auth_response}")
+            logger.info(f"BASE_URL: {base_url}")
+            logger.info(f"Callback URL: {callback_url}")
+            
+            # SIEMPRE usar confirmación de email con PKCE
+            logger.info("=" * 60)
+            logger.info("📧 MODO: Confirmación de email ACTIVADA (Resend)")
+            logger.info(f"📧 Callback URL: {callback_url}")
+            logger.info("=" * 60)
+            
+            # Preparar opciones de sign_up con email redirect
+            signup_options = {
+                "data": {
+                    "full_name": full_name,
+                    "company": company,
+                    "email": email,
+                    "role": role
+                },
+                "email_redirect_to": callback_url
+            }
+            
+            logger.info(f"Creando usuario en Supabase Auth con confirmación de email")
+            
+            try:
+                auth_response = db.client.auth.sign_up({
+                    "email": email,
+                    "password": password,
+                    "options": signup_options
+                })
+                
+                logger.info(f"✅ Usuario creado exitosamente en Supabase Auth")
+                logger.info(f"Respuesta de Supabase Auth: {auth_response}")
+                
+            except Exception as signup_error:
+                error_msg = str(signup_error)
+                
+                # Detectar rate limiting específicamente
+                if "rate limit" in error_msg.lower() or "429" in error_msg:
+                    logger.error("=" * 60)
+                    logger.error("🚫 RATE LIMIT EXCEEDED")
+                    logger.error(f"Error: {error_msg}")
+                    logger.error("=" * 60)
+                    logger.error("SOLUCIONES:")
+                    logger.error("1. Esperar 1 hora")
+                    logger.error("2. Usar email diferente")
+                    logger.error("3. Dashboard Supabase → Auth → Rate Limits → Aumentar límite")
+                    logger.error("=" * 60)
+                    
+                    return {
+                        "success": False,
+                        "error": "Has alcanzado el límite de intentos de registro. Espera 1 hora o usa un email diferente.",
+                        "status_code": 429
+                    }
+                
+                # Manejar errores específicos
+                if "confirmation email" in error_msg.lower() or "sending" in error_msg.lower():
+                    logger.error("=" * 60)
+                    logger.error("🚨 ERROR ENVIANDO EMAIL DE CONFIRMACIÓN")
+                    logger.error(f"Error: {error_msg}")
+                    logger.error("=" * 60)
+                    logger.error("POSIBLES CAUSAS:")
+                    logger.error("1. SMTP no configurado correctamente en Supabase")
+                    logger.error("2. API Key de Resend inválida")
+                    logger.error("3. Confirmar que 'Confirm email' está ON en Dashboard")
+                    logger.error("=" * 60)
+                    
+                    return {
+                        "success": False,
+                        "error": "Error al enviar email de confirmación. Verifica configuración SMTP en Supabase Dashboard.",
+                        "status_code": 500
+                    }
+                else:
+                    logger.error(f"❌ Error crítico en sign_up: {error_msg}")
+                    raise
             
             if auth_response.user:
                 auth_user_id = auth_response.user.id
-                logger.info(f"Usuario creado en Auth con ID: {auth_user_id}")
+                logger.info(f"✅ Usuario creado en Auth con ID: {auth_user_id}")
                 
-                # Crear usuario en base de datos local inmediatamente
-                try:
-                    # Crear usuario en tabla usuarios
-                    user_data = {
-                        'auth_user_id': auth_user_id,
-                        'username': full_name,  # Username = nombre completo
-                        'tipo_usuario': 'regular',
-                        'role': role,
-                        'status': 'activo',
-                        'activo': True,
-                        'fecha_registro': 'now()',
-                        'last_login': 'now()'
-                    }
-                    
-                    db.client.table('usuarios').insert(user_data).execute()
-                    logger.info(f"Usuario creado en tabla usuarios: {full_name}")
-                    
-                    # Crear info de contacto básica
-                    contact_data = {
-                        'auth_user_id': auth_user_id,
-                        'correo_principal': email,
-                        'nombre_completo': full_name
-                    }
-                    
-                    db.client.table('info_contacto').insert(contact_data).execute()
-                    logger.info(f"Info contacto creada para: {full_name}")
-                    
-                except Exception as e:
-                    logger.warning(f"Error creando datos locales: {e}")
+                # Usuario creado - Debe confirmar email antes de poder usar la app
+                logger.info(f"📧 Email de confirmación enviado a: {email}")
+                logger.info("📧 Usuario debe confirmar su email antes de poder iniciar sesión")
+                logger.info("📧 Las tablas de usuario se crearán después de confirmar el email")
                 
-                # CREAR SESIÓN INMEDIATAMENTE después del registro
-                if auth_response.session:
-                    session['user_id'] = auth_user_id
-                    session['user_email'] = email
-                    session['user_name'] = full_name
-                    session['access_token'] = auth_response.session.access_token
-                    if auth_response.session.refresh_token:
-                        session['refresh_token'] = auth_response.session.refresh_token
-                    
-                    logger.info(f"Sesión creada para usuario: {full_name} (ID: {auth_user_id})")
-                
-                logger.info("Registro completado exitosamente")
                 return {
                     "success": True,
-                    "message": "Usuario registrado exitosamente. Redirigiendo a editar perfil...",
-                    "redirect_url": "/edit-profile",
+                    "message": "¡Registro exitoso! Por favor revisa tu correo electrónico y haz clic en el enlace de confirmación para activar tu cuenta.",
                     "status_code": 200,
                     "auth_user_id": auth_user_id,
-                    "requires_confirmation": False  # Ya no requiere confirmación
+                    "requires_confirmation": True
                 }
             else:
                 logger.error("No se pudo crear el usuario en Supabase Auth")
