@@ -647,108 +647,47 @@ class AuthManager:
         return True, ""
     
     @staticmethod
-    def initialize_user_tables_on_confirmation(auth_user_id: str, email: str, user_metadata: dict) -> bool:
-        """
-        Inicializa las tablas de usuario después de la confirmación de email.
-        Crea directamente los registros en usuarios e info_contacto.
+def initialize_user_tables_on_confirmation(auth_user_id, email, user_metadata):
+    """
+    Inicializa las tablas de usuario cuando se confirma el email.
+    Usa función de base de datos para bypasear RLS correctamente.
+    """
+    try:
+        from supabase_client import db
         
-        Args:
-            auth_user_id: ID del usuario en auth.users
-            email: Email del usuario
-            user_metadata: Metadata del usuario (full_name, company, etc.)
+        full_name = user_metadata.get('full_name', email.split('@')[0])
+        company = user_metadata.get('company', '')
+        role = user_metadata.get('role', 'regular')
         
-        Returns:
-            bool: True si todas las tablas se crearon exitosamente
-        """
-        from supabase_client import get_service_client
+        logger.info(f"Inicializando tablas para usuario confirmado: {email}")
+        logger.info(f"Datos: full_name='{full_name}', company='{company}', role='{role}'")
         
-        try:
-            service_client = get_service_client()
-            if not service_client:
-                logger.error("No se pudo obtener el service client")
-                return False
-            
-            full_name = user_metadata.get('full_name', email.split('@')[0])
-            company = user_metadata.get('company', '')
-            role = user_metadata.get('role', 'regular')
-            
-            logger.info(f"Inicializando tablas para usuario confirmado: {email}")
-            logger.info(f"Datos: full_name='{full_name}', company='{company}', role='{role}'")
-            
-            # Verificar si el usuario ya existe
-            logger.info(f"Verificando existencia de usuario en tabla usuarios...")
-            user_exists = False
-            try:
-                # Usar select sin maybe_single para mayor robustez
-                existing_check = service_client.table('usuarios')\
-                    .select('auth_user_id')\
-                    .eq('auth_user_id', auth_user_id)\
-                    .execute()
-                
-                logger.info(f"Resultado de verificación: {existing_check}")
-                
-                if existing_check and hasattr(existing_check, 'data') and existing_check.data and len(existing_check.data) > 0:
-                    logger.info(f"✅ Usuario ya existe en tabla usuarios: {email}")
-                    return True
-                
-                logger.info(f"Usuario NO existe en tabla usuarios (verificación exitosa), procediendo con inicialización...")
-            except Exception as check_error:
-                logger.warning(f"⚠️ Error verificando usuario existente: {check_error}")
-                logger.warning(f"Tipo de error: {type(check_error).__name__}")
-                logger.info("Continuando con creación asumiendo que usuario no existe...")
-                # Continuar con la creación
-            
-            # 1. Crear registro en tabla usuarios
-            new_user = {
-                'auth_user_id': auth_user_id,
-                'username': full_name,  # Username = nombre completo
-                'tipo_usuario': role,
-                'role': role[:50] if role else 'regular',  # Truncar a 50 chars
-                'status': 'active',
-                'activo': True
-            }
-            
-            logger.info(f"Creando usuario en tabla usuarios: {new_user}")
-            try:
-                user_result = service_client.table('usuarios').insert(new_user).execute()
-                
-                if not user_result or not hasattr(user_result, 'data') or not user_result.data or len(user_result.data) == 0:
-                    logger.error(f"❌ Error creando usuario en tabla usuarios para {email}")
-                    logger.error(f"Respuesta de Supabase: {user_result}")
-                    return False
-                
-                logger.info(f"✅ Usuario creado en tabla usuarios: {email}")
-            except Exception as insert_error:
-                logger.error(f"❌ Excepción creando usuario en tabla usuarios: {insert_error}")
-                logger.error(f"Tipo de error: {type(insert_error).__name__}")
-                return False
-            
-            # 2. Crear registro en info_contacto
-            contact_info = {
-                'auth_user_id': auth_user_id,
-                'correo_principal': email,
-                'nombre_completo': full_name,
-                'nombre_empresa': company if company else None
-            }
-            
-            logger.info(f"Creando registro en info_contacto: {contact_info}")
-            contact_result = service_client.table('info_contacto').insert(contact_info).execute()
-            
-            if not contact_result.data or len(contact_result.data) == 0:
-                logger.warning(f"⚠️ Error creando info_contacto para {email}, pero usuario creado")
-                # No fallar si solo falla info_contacto, el usuario ya está creado
-            else:
-                logger.info(f"✅ Registro creado en info_contacto para: {email}")
-            
+        # Llamar a la función de base de datos que bypasea RLS
+        result = db.client.rpc('initialize_new_user', {
+            'p_auth_user_id': auth_user_id,
+            'p_email': email,
+            'p_username': full_name,
+            'p_tipo_usuario': role,
+            'p_role': role,
+            'p_nombre_completo': full_name,
+            'p_nombre_empresa': company if company else None
+        }).execute()
+        
+        logger.info(f"Respuesta de función DB: {result.data}")
+        
+        if result.data and result.data.get('success'):
             logger.info(f"✅ Inicialización completa exitosa para: {email}")
             return True
-            
-        except Exception as e:
-            logger.error(f"❌ Error inicializando tablas para usuario {email}: {str(e)}")
-            logger.error(f"Detalles del error: {type(e).__name__}")
-            import traceback
-            logger.error(f"Traceback: {traceback.format_exc()}")
+        else:
+            error_msg = result.data.get('message', 'Error desconocido') if result.data else 'Sin respuesta'
+            logger.error(f"❌ Error en función DB: {error_msg}")
             return False
+            
+    except Exception as e:
+        logger.error(f"❌ Error inicializando tablas para usuario {email}: {str(e)}")
+        logger.error(f"Detalles del error: {type(e).__name__}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return False
 
 
     @staticmethod
