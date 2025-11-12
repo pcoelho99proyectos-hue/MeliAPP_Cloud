@@ -685,43 +685,54 @@ class AuthManager:
                 # Capturar APIError que puede contener respuesta exitosa
                 logger.info(f"⚠️ Excepción RPC (puede ser falso positivo): {rpc_error}")
                 
-                # El error es un dict con la respuesta
-                if isinstance(rpc_error.args[0], dict):
-                    error_dict = rpc_error.args[0]
-                    logger.info(f"📦 Error como dict: {error_dict}")
+                # Convertir el error a dict si es string
+                error_dict = None
+                if len(rpc_error.args) > 0:
+                    error_arg = rpc_error.args[0]
                     
-                    # Extraer details que contiene el JSON real
-                    if 'details' in error_dict:
-                        details = error_dict['details']
-                        logger.info(f"📝 Details: {details}")
+                    if isinstance(error_arg, dict):
+                        error_dict = error_arg
+                        logger.info(f"📦 Error como dict directo")
+                    elif isinstance(error_arg, str):
+                        # El error es un string de un dict, parsearlo
+                        logger.info(f"📦 Error como string, parseando...")
+                        try:
+                            # Usar eval para convertir string de dict a dict real
+                            # Es seguro aquí porque viene de nuestra propia excepción
+                            error_dict = eval(error_arg)
+                            logger.info(f"✅ Dict parseado desde string")
+                        except:
+                            logger.error(f"❌ No se pudo parsear string como dict")
+                            raise
+                
+                if error_dict and 'details' in error_dict:
+                    details = error_dict['details']
+                    logger.info(f"📝 Details: {details}")
+                    
+                    # Details viene como bytes string: b'{"success": true...}'
+                    if isinstance(details, (str, bytes)):
+                        # Limpiar el formato b'...'
+                        if isinstance(details, bytes):
+                            details = details.decode('utf-8')
                         
-                        # Details viene como bytes string: b'{"success": true...}'
-                        if isinstance(details, (str, bytes)):
-                            # Limpiar el formato b'...'
-                            if isinstance(details, bytes):
-                                details = details.decode('utf-8')
-                            
-                            # Si empieza con b', quitarlo
-                            if details.startswith("b'") or details.startswith('b"'):
-                                details = details[2:-1]  # Quitar b' y '
-                            
-                            logger.info(f"🔍 Details limpiado: {details}")
-                            
-                            try:
-                                response_data = json.loads(details)
-                                logger.info(f"✅ JSON extraído del error: {response_data}")
-                            except Exception as parse_error:
-                                logger.error(f"❌ No se pudo parsear JSON: {parse_error}")
-                                logger.error(f"String a parsear: {details}")
-                                raise
-                        else:
-                            logger.error(f"❌ Details no es string: {type(details)}")
+                        # Si empieza con b', quitarlo
+                        if details.startswith("b'") or details.startswith('b"'):
+                            details = details[2:-1]  # Quitar b' y '
+                        
+                        logger.info(f"🔍 Details limpiado: {details}")
+                        
+                        try:
+                            response_data = json.loads(details)
+                            logger.info(f"✅ JSON extraído del error: {response_data}")
+                        except Exception as parse_error:
+                            logger.error(f"❌ No se pudo parsear JSON: {parse_error}")
+                            logger.error(f"String a parsear: {details}")
                             raise
                     else:
-                        logger.error(f"❌ No hay 'details' en error_dict")
+                        logger.error(f"❌ Details no es string: {type(details)}")
                         raise
                 else:
-                    logger.error(f"❌ Error no es dict: {type(rpc_error.args[0])}")
+                    logger.error(f"❌ No se pudo obtener error_dict o no tiene 'details'")
                     raise
             
             # Parsear respuesta si es string
