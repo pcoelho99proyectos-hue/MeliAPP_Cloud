@@ -647,47 +647,47 @@ class AuthManager:
         return True, ""
     
     @staticmethod
-def initialize_user_tables_on_confirmation(auth_user_id, email, user_metadata):
-    """
-    Inicializa las tablas de usuario cuando se confirma el email.
-    Usa función de base de datos para bypasear RLS correctamente.
-    """
-    try:
-        from supabase_client import db
-        
-        full_name = user_metadata.get('full_name', email.split('@')[0])
-        company = user_metadata.get('company', '')
-        role = user_metadata.get('role', 'regular')
-        
-        logger.info(f"Inicializando tablas para usuario confirmado: {email}")
-        logger.info(f"Datos: full_name='{full_name}', company='{company}', role='{role}'")
-        
-        # Llamar a la función de base de datos que bypasea RLS
-        result = db.client.rpc('initialize_new_user', {
-            'p_auth_user_id': auth_user_id,
-            'p_email': email,
-            'p_username': full_name,
-            'p_tipo_usuario': role,
-            'p_role': role,
-            'p_nombre_completo': full_name,
-            'p_nombre_empresa': company if company else None
-        }).execute()
-        
-        logger.info(f"Respuesta de función DB: {result.data}")
-        
-        if result.data and result.data.get('success'):
-            logger.info(f"✅ Inicialización completa exitosa para: {email}")
-            return True
-        else:
-            error_msg = result.data.get('message', 'Error desconocido') if result.data else 'Sin respuesta'
-            logger.error(f"❌ Error en función DB: {error_msg}")
-            return False
+    def initialize_user_tables_on_confirmation(auth_user_id, email, user_metadata):
+        """
+        Inicializa las tablas de usuario cuando se confirma el email.
+        Usa función de base de datos para bypasear RLS correctamente.
+        """
+        try:
+            from supabase_client import db
             
-    except Exception as e:
-        logger.error(f"❌ Error inicializando tablas para usuario {email}: {str(e)}")
-        logger.error(f"Detalles del error: {type(e).__name__}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        return False
+            full_name = user_metadata.get('full_name', email.split('@')[0])
+            company = user_metadata.get('company', '')
+            role = user_metadata.get('role', 'regular')
+            
+            logger.info(f"Inicializando tablas para usuario confirmado: {email}")
+            logger.info(f"Datos: full_name='{full_name}', company='{role}'")
+            
+            # Llamar a la función de base de datos que bypasea RLS
+            result = db.client.rpc('initialize_new_user', {
+                'p_auth_user_id': auth_user_id,
+                'p_email': email,
+                'p_username': full_name,
+                'p_tipo_usuario': role,
+                'p_role': role,
+                'p_nombre_completo': full_name,
+                'p_nombre_empresa': company if company else None
+            }).execute()
+            
+            logger.info(f"Respuesta de función DB: {result.data}")
+            
+            if result.data and result.data.get('success'):
+                logger.info(f"✅ Inicialización completa exitosa para: {email}")
+                return True
+            else:
+                error_msg = result.data.get('message', 'Error desconocido') if result.data else 'Sin respuesta'
+                logger.error(f"❌ Error en función DB: {error_msg}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Error inicializando tablas para usuario {email}: {str(e)}")
+            logger.error(f"Detalles del error: {type(e).__name__}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return False
 
 
     @staticmethod
