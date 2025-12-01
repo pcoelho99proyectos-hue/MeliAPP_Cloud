@@ -870,14 +870,6 @@ class AuthManager:
             logger.error(f"Detalles completos: {traceback.format_exc()}")
             return {"success": True, "message": "Si el correo está registrado, recibirás un enlace para recuperar tu contraseña."}
 
-    @staticmethod
-    def request_password_reset_authenticated():
-        """Solicita un reseteo de contraseña para el usuario autenticado actual."""
-        if 'user_email' not in session:
-            return {"success": False, "error": "Usuario no autenticado", "status_code": 401}
-        
-        email = session['user_email']
-        return AuthManager.request_password_reset(email)
 
     @staticmethod
     def register_user(email: str, password: str, full_name: str, company: str = "", role: str = "regular"):

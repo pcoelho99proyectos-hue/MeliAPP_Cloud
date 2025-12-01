@@ -472,15 +472,6 @@ def api_reset_password():
             'error': 'Error interno del servidor'
         }), 500
 
-@auth_bp.route('/api/auth/request-password-reset', methods=['POST'])
-@AuthManager.login_required
-def handle_request_password_reset_authenticated():
-    """Maneja la solicitud de reseteo de contraseña para un usuario logueado."""
-    result = AuthManager.request_password_reset_authenticated()
-    status_code = result.get('status_code', 200 if result.get('success') else 500)
-    return jsonify(result), status_code
-
-
 @auth_bp.route('/api/auth/change-password', methods=['POST'])
 @AuthManager.login_required
 def handle_change_password():
