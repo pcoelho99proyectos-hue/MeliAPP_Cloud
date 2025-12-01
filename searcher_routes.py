@@ -152,6 +152,98 @@ def get_my_profile_complete():
         logger.error(f"[API /profile/me] Error: {str(e)}")
         return jsonify({"success": False, "error": "Error interno del servidor"}), 500
 
+@search_bp.route('/profile/<user_id>', methods=['GET'])
+def get_user_profile_by_id(user_id):
+    """
+    Endpoint API REST para Flutter - Obtiene perfil público de cualquier usuario.
+    
+    Permite a usuarios autenticados consultar información de contacto de otros usuarios
+    para facilitar la comunicación entre apicultores, proveedores y compradores.
+    
+    GET /api/profile/{user_id}
+    
+    Args:
+        user_id: auth_user_id del usuario a consultar (UUID completo o segmento de 8 chars)
+    
+    Returns:
+        JSON con datos públicos: nombre, empresa, email, teléfono, ubicación
+        
+    Example response:
+        {
+            "auth_user_id": "uuid",
+            "username": "rodrigojc",
+            "nombre_completo": "Rodrigo Jofré",
+            "nombre_empresa": "Honey CORPs",
+            "correo_principal": "email@example.com",
+            "telefono_principal": "+56 9 666 777 88",
+            "comuna": "Hornopiren",
+            "region": "Los Lagos",
+            "role": "PROVEEDOR"
+        }
+    """
+    try:
+        logger.info(f"[API /profile/{user_id}] Consulta de perfil público")
+        
+        # Si es segmento de 8 chars, buscar UUID completo
+        if len(user_id) == 8:
+            logger.info(f"[API /profile] Buscando UUID completo para segmento: {user_id}")
+            response = db.client.table('usuarios')\
+                .select('auth_user_id')\
+                .execute()
+            
+            full_uuid = None
+            for user in response.data:
+                if user['auth_user_id'].startswith(user_id):
+                    full_uuid = user['auth_user_id']
+                    break
+            
+            if not full_uuid:
+                return jsonify({"error": "Usuario no encontrado"}), 404
+            
+            user_id = full_uuid
+        
+        # Obtener datos completos del usuario usando método centralizado
+        profile_data = searcher.get_user_profile_data(user_id)
+        
+        if not profile_data:
+            logger.warning(f"[API /profile/{user_id}] Usuario no encontrado")
+            return jsonify({"error": "Usuario no encontrado"}), 404
+        
+        # Extraer datos de usuario y contacto
+        user_data = profile_data.get('user') or {}
+        contact_data = profile_data.get('contact_info') or {}
+        
+        # Crear respuesta con datos públicos esenciales
+        public_profile = {
+            # Identificación
+            'auth_user_id': user_id,
+            'id': user_id,  # Alias para compatibilidad
+            'username': user_data.get('username'),
+            'role': user_data.get('role'),
+            'tipo_usuario': user_data.get('tipo_usuario'),
+            'status': user_data.get('status'),
+            
+            # Información de contacto pública
+            'nombre_completo': contact_data.get('nombre_completo'),
+            'nombre_empresa': contact_data.get('nombre_empresa'),
+            'correo_principal': contact_data.get('correo_principal'),
+            'email': contact_data.get('correo_principal'),  # Alias
+            'telefono_principal': contact_data.get('telefono_principal'),
+            'telefono': contact_data.get('telefono_principal'),  # Alias
+            
+            # Ubicación
+            'comuna': contact_data.get('comuna'),
+            'region': contact_data.get('region'),
+            'direccion': contact_data.get('direccion'),
+        }
+        
+        logger.info(f"[API /profile/{user_id}] Perfil público obtenido exitosamente")
+        return jsonify(public_profile)
+        
+    except Exception as e:
+        logger.error(f"[API /profile/{user_id}] Error: {str(e)}")
+        return jsonify({"error": "Error al obtener perfil"}), 500
+
 @search_bp.route('/usuario/<uuid_segment>/qr', methods=['GET'])
 @AuthManager.login_required
 def get_user_qr(uuid_segment):

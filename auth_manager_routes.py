@@ -320,6 +320,50 @@ def api_resend_confirmation():
 # API REST - Gestión de Contraseñas
 # ====================
 
+@auth_bp.route('/api/auth/forgot-password', methods=['POST'])
+def api_forgot_password():
+    """
+    API REST endpoint público para solicitar reseteo de contraseña.
+    No requiere autenticación.
+    
+    POST /api/auth/forgot-password
+    Body JSON: {"email": "user@example.com"}
+    
+    Returns:
+        JSON: {"success": bool, "message": str}
+    """
+    try:
+        data = request.get_json()
+        if not data or 'email' not in data:
+            return jsonify({
+                'success': False,
+                'error': 'Email es requerido'
+            }), 400
+        
+        email = data.get('email').strip()
+        
+        if not email:
+            return jsonify({
+                'success': False,
+                'error': 'Email no puede estar vacío'
+            }), 400
+        
+        # Llamar a AuthManager para enviar email de reseteo
+        result = AuthManager.request_password_reset(email)
+        
+        # Siempre retornar success=True por seguridad (no revelar si email existe)
+        return jsonify({
+            'success': True,
+            'message': 'Si el correo está registrado, recibirás un enlace para recuperar tu contraseña.'
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error en forgot-password: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor'
+        }), 500
+
 @auth_bp.route('/api/auth/request-password-reset', methods=['POST'])
 @AuthManager.login_required
 def handle_request_password_reset_authenticated():
