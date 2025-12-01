@@ -851,8 +851,9 @@ class AuthManager:
             
             logger.info(f"Enviando email de reseteo a {email} con redirect_to: {redirect_to}")
             
-            # Enviar email de reseteo con redirect URL explícita
-            db.client.auth.api.reset_password_for_email(
+            # Enviar email de reseteo usando el método correcto de Supabase
+            # Nota: Es reset_password_email (no api.reset_password_for_email)
+            db.client.auth.reset_password_email(
                 email,
                 options={
                     'redirect_to': redirect_to

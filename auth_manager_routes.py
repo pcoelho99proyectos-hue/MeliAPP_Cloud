@@ -14,6 +14,8 @@ Todas las respuestas son JSON para consumo desde aplicaciones móviles o cliente
 """
 
 import logging
+import os
+import traceback
 from flask import Blueprint, request, jsonify, session
 from supabase_client import db
 from auth_manager import AuthManager
@@ -413,25 +415,54 @@ def api_reset_password():
                 'error': 'La contraseña debe tener al menos 6 caracteres'
             }), 400
         
-        # Actualizar contraseña usando el token
+        # Actualizar contraseña usando el token de recuperación
         try:
-            # Usar Supabase Auth para actualizar la contraseña
-            response = db.client.auth.api.update_user(
-                access_token=token,
-                attributes={'password': new_password}
-            )
+            import requests
             
-            logger.info(f"✅ Contraseña actualizada exitosamente")
-            return jsonify({
-                'success': True,
-                'message': 'Contraseña actualizada correctamente'
-            }), 200
+            # Obtener URL de Supabase desde variables de entorno
+            supabase_url = os.getenv('SUPABASE_URL')
+            supabase_key = os.getenv('SUPABASE_KEY')
+            
+            if not supabase_url or not supabase_key:
+                logger.error("❌ Variables SUPABASE_URL o SUPABASE_KEY no configuradas")
+                return jsonify({
+                    'success': False,
+                    'error': 'Error de configuración del servidor'
+                }), 500
+            
+            # Llamar a la API REST de Supabase directamente
+            url = f"{supabase_url}/auth/v1/user"
+            headers = {
+                'Authorization': f'Bearer {token}',
+                'apikey': supabase_key,
+                'Content-Type': 'application/json'
+            }
+            payload = {
+                'password': new_password
+            }
+            
+            response = requests.put(url, json=payload, headers=headers)
+            
+            if response.status_code == 200:
+                logger.info(f"✅ Contraseña actualizada exitosamente")
+                return jsonify({
+                    'success': True,
+                    'message': 'Contraseña actualizada correctamente'
+                }), 200
+            else:
+                error_data = response.json() if response.text else {}
+                logger.error(f"❌ Error de Supabase al actualizar contraseña: {response.status_code} - {error_data}")
+                return jsonify({
+                    'success': False,
+                    'error': 'Token inválido o expirado. Solicita un nuevo enlace de recuperación.'
+                }), 400
             
         except Exception as supabase_error:
-            logger.error(f"❌ Error de Supabase al actualizar contraseña: {str(supabase_error)}")
+            logger.error(f"❌ Error al actualizar contraseña: {str(supabase_error)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return jsonify({
                 'success': False,
-                'error': 'Token inválido o expirado. Solicita un nuevo enlace de recuperación.'
+                'error': 'Error al procesar la solicitud. Por favor intenta nuevamente.'
             }), 400
         
     except Exception as e:
