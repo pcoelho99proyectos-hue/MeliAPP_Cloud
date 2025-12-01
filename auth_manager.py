@@ -845,15 +845,28 @@ class AuthManager:
             return {"success": False, "error": "El correo es requerido", "status_code": 400}
         
         try:
-            # Aquí no se necesita redirect_to porque Supabase usará la URL configurada en el dashboard
-            # En esta versión de la librería, la llamada es a través de 'api'
-            db.client.auth.api.reset_password_for_email(email)
-            logger.info(f"Solicitud de reseteo de contraseña enviada para: {email}")
+            # Obtener URL base para redirección
+            base_url = os.getenv('BASE_URL', 'https://meli-app-cloud.vercel.app')
+            redirect_to = f"{base_url}/reset-password"
+            
+            logger.info(f"Enviando email de reseteo a {email} con redirect_to: {redirect_to}")
+            
+            # Enviar email de reseteo con redirect URL explícita
+            db.client.auth.api.reset_password_for_email(
+                email,
+                options={
+                    'redirect_to': redirect_to
+                }
+            )
+            
+            logger.info(f"✅ Solicitud de reseteo de contraseña enviada exitosamente para: {email}")
             return {"success": True, "message": "Si el correo está registrado, recibirás un enlace para recuperar tu contraseña."}
         except Exception as e:
             # Por seguridad, no revelamos si el correo existe o no.
             # Logueamos el error real pero devolvemos un mensaje genérico.
-            logger.error(f"Error al solicitar reseteo de contraseña para {email}: {str(e)}")
+            logger.error(f"❌ Error al solicitar reseteo de contraseña para {email}: {str(e)}")
+            logger.error(f"Tipo de error: {type(e).__name__}")
+            logger.error(f"Detalles completos: {traceback.format_exc()}")
             return {"success": True, "message": "Si el correo está registrado, recibirás un enlace para recuperar tu contraseña."}
 
     @staticmethod

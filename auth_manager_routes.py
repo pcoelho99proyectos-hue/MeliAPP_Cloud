@@ -364,6 +364,83 @@ def api_forgot_password():
             'error': 'Error interno del servidor'
         }), 500
 
+@auth_bp.route('/reset-password', methods=['GET'])
+def reset_password_page():
+    """
+    Página web para restablecer contraseña.
+    El usuario llega aquí desde el email con el token.
+    
+    GET /reset-password?token=xxx o?access_token=xxx
+    """
+    from flask import render_template
+    return render_template('pages/reset_password.html')
+
+@auth_bp.route('/api/auth/reset-password', methods=['POST'])
+def api_reset_password():
+    """
+    API REST para completar el reseteo de contraseña con token.
+    
+    POST /api/auth/reset-password
+    Body JSON: {
+        "token": "access_token_from_email",
+        "password": "new_password"
+    }
+    
+    Returns:
+        JSON: {"success": bool, "message": str}
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'No se recibieron datos'
+            }), 400
+        
+        token = data.get('token')
+        new_password = data.get('password')
+        
+        if not token or not new_password:
+            return jsonify({
+                'success': False,
+                'error': 'Token y contraseña son requeridos'
+            }), 400
+        
+        if len(new_password) < 6:
+            return jsonify({
+                'success': False,
+                'error': 'La contraseña debe tener al menos 6 caracteres'
+            }), 400
+        
+        # Actualizar contraseña usando el token
+        try:
+            # Usar Supabase Auth para actualizar la contraseña
+            response = db.client.auth.api.update_user(
+                access_token=token,
+                attributes={'password': new_password}
+            )
+            
+            logger.info(f"✅ Contraseña actualizada exitosamente")
+            return jsonify({
+                'success': True,
+                'message': 'Contraseña actualizada correctamente'
+            }), 200
+            
+        except Exception as supabase_error:
+            logger.error(f"❌ Error de Supabase al actualizar contraseña: {str(supabase_error)}")
+            return jsonify({
+                'success': False,
+                'error': 'Token inválido o expirado. Solicita un nuevo enlace de recuperación.'
+            }), 400
+        
+    except Exception as e:
+        logger.error(f"❌ Error en reset-password: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor'
+        }), 500
+
 @auth_bp.route('/api/auth/request-password-reset', methods=['POST'])
 @AuthManager.login_required
 def handle_request_password_reset_authenticated():
